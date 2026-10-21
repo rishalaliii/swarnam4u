@@ -1,0 +1,27 @@
+name: Backfill history
+on:
+  workflow_dispatch:
+    inputs:
+      start: { description: "Start date YYYY-MM-DD", required: true, default: "2021-10-21" }
+      end:   { description: "End date YYYY-MM-DD",   required: true, default: "2026-10-21" }
+permissions:
+  contents: write
+concurrency:
+  group: update-rates
+  cancel-in-progress: false
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install requests
+      - run: python scripts/backfill_goodreturns.py "${{ inputs.start }}" "${{ inputs.end }}"
+      - if: always()
+        run: |
+          git config user.name "rates-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/rates.json
+          git diff --cached --quiet || (git commit -m "Backfill history" && git pull --rebase && git push)

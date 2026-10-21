@@ -1,0 +1,232 @@
+{
+  "updated": "2026-10-21T11:30:00+05:30",
+  "source": "AKGSMA Kerala",
+  "source_url": "https://akgsma.com",
+  "currency": "INR",
+  "unit": "gram",
+  "gold": {
+    "22K · 916": {
+      "today": 13390,
+      "yesterday": 13490,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala"
+    },
+    "18K · 750": {
+      "today": 10970,
+      "yesterday": 11040,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala"
+    },
+    "24K · 999": {
+      "today": 14607,
+      "yesterday": 14716,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala (calculated from 22K)"
+    },
+    "14K · 585": {
+      "today": 8551,
+      "yesterday": 8615,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala (calculated from 22K)"
+    }
+  },
+  "silver": {
+    "Silver · 999": {
+      "today": 230,
+      "yesterday": null,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala"
+    },
+    "Silver · 925": {
+      "today": 212.75,
+      "yesterday": null,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala (calculated from 999)"
+    },
+    "Silver · 800": {
+      "today": 184,
+      "yesterday": null,
+      "date": "2026-10-21",
+      "source": "AKGSMA Kerala (calculated from 999)"
+    }
+  },
+  "platinum": {},
+  "history_basis": {
+    "gold": "22K · 916",
+    "silver": "Silver · 925",
+    "platinum": "Platinum · 950"
+  },
+  "history": {
+    "gold": [
+      {
+        "date": "2026-10-12",
+        "rate": 13720.0
+      },
+      {
+        "date": "2026-10-13",
+        "rate": 13685.0
+      },
+      {
+        "date": "2026-10-14",
+        "rate": 13590.0
+      },
+      {
+        "date": "2026-10-15",
+        "rate": 13515.0
+      },
+      {
+        "date": "2026-10-16",
+        "rate": 13515.0
+      },
+      {
+        "date": "2026-10-17",
+        "rate": 13535.0
+      },
+      {
+        "date": "2026-10-18",
+        "rate": 13535.0
+      },
+      {
+        "date": "2026-10-19",
+        "rate": 13570.0
+      },
+      {
+        "date": "2026-10-20",
+        "rate": 13390.0
+      },
+      {
+        "date": "2026-10-21",
+        "rate": 13390.0
+      }
+    ],
+    "silver": [
+      {
+        "date": "2026-10-21",
+        "rate": 212.75
+      }
+    ],
+    "platinum": []
+  },
+  "series": {
+    "gold22": {
+      "label": "Gold 22K · 916",
+      "metal": "gold",
+      "group_key": "22K · 916",
+      "note": "AKGSMA board rate",
+      "history": [
+        {
+          "date": "2026-10-12",
+          "rate": 13720.0
+        },
+        {
+          "date": "2026-10-13",
+          "rate": 13685.0
+        },
+        {
+          "date": "2026-10-14",
+          "rate": 13590.0
+        },
+        {
+          "date": "2026-10-15",
+          "rate": 13515.0
+        },
+        {
+          "date": "2026-10-16",
+          "rate": 13515.0
+        },
+        {
+          "date": "2026-10-17",
+          "rate": 13535.0
+        },
+        {
+          "date": "2026-10-18",
+          "rate": 13535.0
+        },
+        {
+          "date": "2026-10-19",
+          "rate": 13570.0
+        },
+        {
+          "date": "2026-10-20",
+          "rate": 13390.0
+        },
+        {
+          "date": "2026-10-21",
+          "rate": 13390.0
+        }
+      ]
+    },
+    "gold24": {
+      "label": "Gold 24K · 999",
+      "metal": "gold",
+      "group_key": "24K · 999",
+      "note": "Calculated from the 22K board rate (22K × 24/22); AKGSMA does not publish 24K",
+      "history": [
+        {
+          "date": "2026-10-12",
+          "rate": 14968.0
+        },
+        {
+          "date": "2026-10-13",
+          "rate": 14929.0
+        },
+        {
+          "date": "2026-10-14",
+          "rate": 14826.0
+        },
+        {
+          "date": "2026-10-15",
+          "rate": 14744.0
+        },
+        {
+          "date": "2026-10-16",
+          "rate": 14744.0
+        },
+        {
+          "date": "2026-10-17",
+          "rate": 14766.0
+        },
+        {
+          "date": "2026-10-18",
+          "rate": 14766.0
+        },
+        {
+          "date": "2026-10-19",
+          "rate": 14804.0
+        },
+        {
+          "date": "2026-10-20",
+          "rate": 14608.0
+        },
+        {
+          "date": "2026-10-21",
+          "rate": 14608.0
+        }
+      ]
+    },
+    "silver999": {
+      "label": "Silver 999",
+      "metal": "silver",
+      "group_key": "Silver · 999",
+      "note": "AKGSMA board rate",
+      "history": [
+        {
+          "date": "2026-10-21",
+          "rate": 230
+        }
+      ]
+    },
+    "silver925": {
+      "label": "Silver 925",
+      "metal": "silver",
+      "group_key": "Silver · 925",
+      "note": "Calculated from the 999 rate (× 0.925) unless the board quotes it",
+      "history": [
+        {
+          "date": "2026-10-21",
+          "rate": 212.75
+        }
+      ]
+    }
+  }
+}

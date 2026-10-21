@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculator – Swarnam4U Gold, Silver & Platinum Value Estimator</title>
+<meta name="description" content="Estimate gold, silver or platinum metal value from the current Kerala board rate, purity and weight in grams.">
+<meta name="theme-color" content="#8b0f1f">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://akgsma.com"><link rel="preconnect" href="https://r.jina.ai"><link rel="preconnect" href="https://api.allorigins.win"><link rel="preconnect" href="https://corsproxy.io">
+<link rel="preload" href="data/rates.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="index.html">Swarnam<b>4U</b></a>
+  <nav class="links" aria-label="Main"><a href="index.html">Home</a><a href="trends.html">Trends</a><a href="calculator.html" aria-current="page">Calculator</a><a href="poster.html">Poster</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav>
+</div></header>
+
+<div class="pagehead wrap"><h1>Metal rate calculator</h1>
+  <p>Estimate the metal value of an item from the current board rate, purity and weight.</p><div class="stamp" data-s="none"><span class="dot"></span><span id="stamp">Loading rates…</span></div></div>
+<main class="wrap">
+  <section class="section calcgrid">
+    <div class="card form">
+      <div><label id="mlabel">Metal</label><div class="ingots sm" id="picker" role="tablist" aria-label="Choose metal"><button class="ingot" role="tab" data-m="gold" aria-selected="false" tabindex="-1"><span class="bar"><span class="lbl"><b>Gold</b><i>Au</i></span></span></button><button class="ingot" role="tab" data-m="silver" aria-selected="false" tabindex="-1"><span class="bar"><span class="lbl"><b>Silver</b><i>Ag</i></span></span></button><button class="ingot" role="tab" data-m="platinum" aria-selected="false" tabindex="-1"><span class="bar"><span class="lbl"><b>Platinum</b><i>Pt</i></span></span></button></div></div>
+      <div><label for="pur">Purity</label><select id="pur"></select></div>
+      <div class="row2">
+        <div><label for="wt">Weight (grams)</label><input id="wt" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 8"><div class="err" id="wtErr" role="alert"></div></div>
+        <div><label for="mk">Making charge % (optional)</label><input id="mk" type="number" inputmode="decimal" min="0" max="100" step="any" placeholder="Blank = none"><div class="err" id="mkErr" role="alert"></div></div>
+      </div>
+      <div class="cta" style="margin:0"><button class="btn" id="reset" type="button">Reset</button><button class="btn" id="clear" type="button">Clear</button></div>
+      <p class="note" style="margin:0"><b>Reset</b> restores gold 22K and empties all fields. <b>Clear</b> empties weight and making charge only.</p>
+    </div>
+    <div class="card result" id="res" aria-live="polite" data-metal="gold"></div>
+  </section>
+</main>
+<footer><div class="wrap">
+  <span>© <span id="yr"></span> Swarnam4U · Kerala<br>Rates are for reference. Confirm the final price with your jeweller.</span>
+  <a class="pill" href="mailto:swarnam4u@gmail.com">✉ swarnam4u@gmail.com</a>
+</div></footer>
+<script src="assets/site.js"></script>
+<script>
+(function(){
+var S=Swarnam,$=S.$;
+var CFG={
+  gold:{ref:"24K · 999",refF:999,def:1,opts:[{n:"24K · 999",f:999,k:"24K · 999"},{n:"22K · 916",f:916,k:"22K · 916"},{n:"18K · 750",f:750,k:"18K · 750"},{n:"14K · 585",f:585,k:"14K · 585"}]},
+  silver:{ref:"Silver · 999",refF:999,def:0,opts:[{n:"999 · fine silver",f:999,k:"Silver · 999"},{n:"925 · sterling",f:925,k:"Silver · 925"},{n:"900",f:900},{n:"800",f:800}]},
+  platinum:{ref:"Platinum · 950",refF:950,def:1,opts:[{n:"999",f:999},{n:"950",f:950,k:"Platinum · 950"},{n:"900",f:900},{n:"850",f:850}]}
+};
+function fillPurity(){var c=CFG[S.metal],sel=$("pur");sel.innerHTML=c.opts.map(function(o,i){return '<option value="'+i+'">'+o.n+'</option>'}).join("");sel.value=c.def}
+function box(t,m){return '<div class="empty"><b>'+t+'</b>'+m+'</div>'}
+function row(k,v,sub,cls){return '<div class="r'+(cls?" "+cls:"")+'"><dt>'+k+'</dt><dd>'+v+(sub?'<span class="sub">'+sub+'</span>':'')+'</dd></div>'}
+function calc(){
+  var m=S.metal,M=S.META[m],c=CFG[m],o=c.opts[+$("pur").value]||c.opts[c.def],d=S.data,res=$("res");
+  res.dataset.metal=m;
+  var wRaw=$("wt").value.trim(),mRaw=$("mk").value.trim(),wErr="",mErr="",w=NaN,mk=0;
+  if(wRaw!==""){w=Number(wRaw);if(!isFinite(w)||w<=0)wErr="Enter a weight greater than 0 grams.";else if(w>1e6)wErr="That weight looks too large. Enter grams."}
+  if(mRaw!==""){mk=Number(mRaw);if(!isFinite(mk)||mk<0||mk>100)mErr="Enter a percentage between 0 and 100."}
+  $("wtErr").textContent=wErr;$("mkErr").textContent=mErr;
+  var entry=d&&d[m]&&d[m][c.ref],ref=entry?entry.today:null,unitOk=!d||!d.unit||d.unit==="gram";
+  if(!S.hasRates()||!(ref>0)||!unitOk){
+    res.innerHTML=box("Rate unavailable","The calculator needs the current "+M.name.toLowerCase()+" board rate ("+c.ref+", per gram), which is not available right now. Please try again after the next update.");return;
+  }
+  if(wRaw===""||wErr||mErr){res.innerHTML=box("Enter a weight","Fill in the weight in grams to see the estimated metal value.");return}
+  var adj=Math.round(ref*o.f/c.refF*100)/100,val=Math.round(adj*w*100)/100,pub=o.k&&o.k!==c.ref&&d[m][o.k]?d[m][o.k].today:null;
+  var h='<dl>'+row("Metal",M.name)+row("Purity",o.n,(o.f/10).toFixed(1).replace(/\.0$/,"")+"% fine")+row("Weight",w.toLocaleString("en-IN",{maximumFractionDigits:3})+" g")+
+    row("Reference rate",S.inr2(ref)+" / g",c.ref+" board rate")+
+    row("Purity-adjusted rate",S.inr2(adj)+" / g","Reference rate × "+o.f+" ÷ "+c.refF)+
+    (pub?row("Board rate for this purity",S.inr2(pub)+" / g","For comparison only, not used above"):"")+
+    row("Estimated metal value",S.inr2(val),"Purity-adjusted rate × weight","final");
+  if(mk>0){var mc=Math.round(val*mk)/100;h+=row("Making charges ("+mk+"% entered)",S.inr2(mc))+row("Estimated total before GST",S.inr2(Math.round((val+mc)*100)/100),"","final")}
+  h+='</dl><p class="note">'+(mk>0?"GST, hallmarking and other fees are not included.":"This is the metal value only. Making charges, GST, hallmarking and other fees are not included.")+
+    ' Rate updated '+S.fmtStamp(d.updated)+' · '+(d.source||"AKGSMA Kerala")+'.</p>';
+  res.innerHTML=h;
+}
+["wt","mk","pur"].forEach(function(id){$(id).addEventListener("input",calc)});
+$("clear").addEventListener("click",function(){$("wt").value="";$("mk").value="";calc();$("wt").focus()});
+$("reset").addEventListener("click",function(){
+  $("wt").value="";$("mk").value="";
+  var g=document.querySelector('#picker .ingot[data-m="gold"]');
+  if(S.metal==="gold"){fillPurity();calc()}else g.click();
+});
+S.picker($("picker"),function(){fillPurity();calc()});
+S.start(calc);
+})();
+</script>
+</body>
+</html>

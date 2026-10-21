@@ -1,0 +1,295 @@
+{
+ "_help": "Daily rotation: Design 1 on anchorDate (IST), then 2, 3 ... 10, then back to 1. Layout values are fractions of each image's own width/height, so any image size works. Edit a template's colours/position here; do not change the order unless you want to change the rotation.",
+ "anchorDate": "2026-10-21",
+ "layout": {
+  "tableX": 0.075,
+  "tableTop": 0.428,
+  "tableBottom": 0.82,
+  "gap": 0.0065,
+  "pillTop": 0.362,
+  "pillH": 0.052,
+  "noteY": 0.838
+ },
+ "templates": [
+  {
+   "image": "assets/posters/design-01.png",
+   "name": "Amber brown",
+   "panel": [
+    "rgba(48,22,2,.93)",
+    "rgba(30,12,0,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-02.png",
+   "name": "Silver grey",
+   "panel": [
+    "rgba(86,12,32,.95)",
+    "rgba(58,6,22,.97)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#8e1230",
+    "#6e0b25",
+    "#560a1e"
+   ],
+   "pillText": "#fff1b8",
+   "note": "#6e0b25"
+  },
+  {
+   "image": "assets/posters/design-03.png",
+   "name": "Deep purple",
+   "panel": [
+    "rgba(22,6,52,.93)",
+    "rgba(14,3,36,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-04.png",
+   "name": "Teal green",
+   "panel": [
+    "rgba(0,30,26,.93)",
+    "rgba(0,20,18,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-05.png",
+   "name": "Cream",
+   "panel": [
+    "rgba(86,12,32,.96)",
+    "rgba(58,6,22,.98)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#8e1230",
+    "#6e0b25",
+    "#560a1e"
+   ],
+   "pillText": "#fff1b8",
+   "note": "#6e0b25"
+  },
+  {
+   "image": "assets/posters/design-06.png",
+   "name": "Forest green",
+   "panel": [
+    "rgba(10,38,18,.93)",
+    "rgba(6,26,12,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-07.png",
+   "name": "Plum",
+   "panel": [
+    "rgba(30,10,26,.93)",
+    "rgba(20,6,18,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-08.png",
+   "name": "Navy slate",
+   "panel": [
+    "rgba(16,18,34,.93)",
+    "rgba(10,12,26,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-09.png",
+   "name": "Magenta burgundy",
+   "panel": [
+    "rgba(52,0,22,.92)",
+    "rgba(36,0,14,.95)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  },
+  {
+   "image": "assets/posters/design-10.png",
+   "name": "Royal blue",
+   "panel": [
+    "rgba(2,8,52,.93)",
+    "rgba(0,4,36,.96)"
+   ],
+   "line": "#f2c14e",
+   "silverPanel": [
+    "rgba(105,98,104,.93)",
+    "rgba(52,45,50,.96)"
+   ],
+   "label": [
+    "#fff1b8",
+    "#f2c14e",
+    "#c98a1b"
+   ],
+   "unit": "#f2c14e",
+   "price": "#ffffff",
+   "divider": "rgba(242,193,78,.55)",
+   "pill": [
+    "#f9e3a0",
+    "#e8b94f",
+    "#c98f22"
+   ],
+   "pillText": "#3a1f12",
+   "note": "#f6dfa6"
+  }
+ ]
+}

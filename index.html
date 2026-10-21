@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarnam4U – Gold, Silver & Platinum Rate Today in Kerala</title>
+<meta name="description" content="AKGSMA Kerala gold, silver and platinum board rates per gram: 24K 999, 22K 916, 18K, 14K, silver and platinum.">
+<meta name="theme-color" content="#8b0f1f">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://akgsma.com"><link rel="preconnect" href="https://r.jina.ai"><link rel="preconnect" href="https://api.allorigins.win"><link rel="preconnect" href="https://corsproxy.io">
+<link rel="preload" href="data/rates.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="index.html">Swarnam<b>4U</b></a>
+  <nav class="links" aria-label="Main"><a href="index.html" aria-current="page">Home</a><a href="trends.html">Trends</a><a href="calculator.html">Calculator</a><a href="poster.html">Poster</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <h1>Gold, silver and platinum <em>rates for Kerala</em></h1>
+  <p>Board rates from the AKGSMA, followed by jewellers across Kerala, shown per gram for every purity jewellers trade in.</p>
+  <div class="stamp" data-s="none"><span class="dot"></span><span id="stamp">Loading rates…</span></div>
+</div></section>
+<main class="wrap">
+  <div class="ingots" id="picker" role="tablist" aria-label="Choose metal"><button class="ingot" role="tab" data-m="gold" aria-selected="false" tabindex="-1"><span class="bar"><span class="lbl"><b>Gold</b><i>Au</i></span></span></button><button class="ingot" role="tab" data-m="silver" aria-selected="false" tabindex="-1"><span class="bar"><span class="lbl"><b>Silver</b><i>Ag</i></span></span></button><button class="ingot" role="tab" data-m="platinum" aria-selected="false" tabindex="-1"><span class="bar"><span class="lbl"><b>Platinum</b><i>Pt</i></span></span></button></div>
+  <section class="section" aria-live="polite">
+    <div class="card" id="pCard" data-metal="gold"></div>
+    <div class="card scroll" id="tCard" style="margin-top:20px"></div>
+    <p class="note">Rates are per gram, excluding GST, making charges and hallmarking. Amber tags mark values taken from a backup source because AKGSMA was unreachable.</p>
+    <p class="note" id="spot"></p>
+    <details class="note"><summary>Source status (for troubleshooting)</summary><pre id="diag" style="white-space:pre-wrap;font-size:.78rem;margin:6px 0 0"></pre></details>
+    <div class="cta"><a class="btn primary" href="trends.html">View price trends</a><a class="btn" href="calculator.html">Open calculator</a></div>
+  </section>
+</main>
+<footer><div class="wrap">
+  <span>© <span id="yr"></span> Swarnam4U · Kerala<br>Rates are for reference. Confirm the final price with your jeweller.</span>
+  <a class="pill" href="mailto:swarnam4u@gmail.com">✉ swarnam4u@gmail.com</a>
+</div></footer>
+<script src="assets/site.js"></script>
+<script>
+(function(){
+var S=Swarnam,$=S.$;
+function render(){
+  var m=S.metal,M=S.META[m],d=S.data,rows=(d&&d[m])||{},keys=Object.keys(rows),p=$("pCard"),t=$("tCard");
+  p.dataset.metal=m;
+  if(!S.hasRates()||!keys.length){
+    p.innerHTML='<div class="empty"><b>'+M.name+' rate unavailable</b>A verified '+M.name.toLowerCase()+' rate is not available right now. It will appear here after the next successful update.</div>';
+    t.innerHTML="";t.hidden=true;return;
+  }
+  t.hidden=false;
+  var fk=rows[M.feat]?M.feat:keys[0],v=rows[fk],c=S.change(v),unit=d.unit||"gram",cur=d.currency||"INR";
+  p.innerHTML='<div class="price"><div><div class="kicker">'+(fk.indexOf(M.name)===0?fk:M.name+' · '+fk)+'</div>'+
+    '<div class="num">'+S.inr(v.today)+'<small>per '+unit+'</small></div>'+
+    (m==="gold"?'<div class="pavan"><span>1 Pavan (8 g) · '+fk+'</span><b>'+S.inr(v.today*8)+'</b></div>':'')+
+    '<div style="margin-top:12px">'+(c?'<span class="badge '+c.cls+'">'+c.arrow+' '+S.inr(Math.abs(c.d))+' ('+c.sg+Math.abs(c.p).toFixed(2)+'%)</span> <span class="mut">daily change</span>':'<span class="mut">Daily change not available yet</span>')+'</div></div>'+
+    '<dl class="meta"><div><dt>Unit</dt><dd>'+cur+' per '+unit+'</dd></div><div><dt>Last updated</dt><dd>'+S.fmtStamp(d.updated)+'</dd></div><div><dt>Source</dt><dd>'+(v.source||d.source||"AKGSMA Kerala")+'</dd></div></dl></div>';
+  var day=d.updated.slice(0,10);
+  t.innerHTML='<table class="tbl"><thead><tr><th>Purity</th><th>Today (per gram)</th>'+(m==="gold"?'<th>1 Pavan (8 g)</th>':'')+'<th>Previous</th><th>Change</th></tr></thead><tbody>'+
+    keys.map(function(k){var r=rows[k],c=S.change(r),old=r.date&&r.date<day;
+      return '<tr><td>'+k+(old?'<span class="note" style="display:block;margin:0">as of '+S.fmtDate(r.date,{day:"numeric",month:"short"})+'</span>':'')+(r.source&&!/AKGSMA/.test(r.source)?'<span class="src alt" title="Not the AKGSMA board rate">'+r.source+'</span>':'')+'</td><td><span class="rate">'+S.inr(r.today)+'</span></td>'+(m==="gold"?'<td>'+S.inr(r.today*8)+'</td>':'')+'<td>'+(r.yesterday?S.inr(r.yesterday):"–")+'</td><td>'+(c?'<span class="'+c.cls+'">'+c.sg+S.inr(Math.abs(c.d))+' ('+c.sg+Math.abs(c.p).toFixed(2)+'%)</span>':"–")+'</td></tr>'}).join("")+
+    '</tbody></table>';
+}
+function spot(){var s=S.data&&S.data.spot,e=$("spot");if(!e)return;e.textContent=s&&s.gold_24k_per_gram?"International spot gold ≈ "+S.inr(s.gold_24k_per_gram)+" per gram (24K, reference only; excludes Indian duty, so it is not the board rate).":""}
+S.subs.push(spot);
+S.picker($("picker"),render);
+S.start(render);
+})();
+</script>
+</body>
+</html>

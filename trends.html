@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trends – Swarnam4U Gold & Silver Price History</title>
+<meta name="description" content="Historical gold and silver board rates for Kerala with selectable date ranges and price movement summary.">
+<meta name="theme-color" content="#8b0f1f">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://akgsma.com"><link rel="preconnect" href="https://r.jina.ai"><link rel="preconnect" href="https://api.allorigins.win"><link rel="preconnect" href="https://corsproxy.io">
+<link rel="preload" href="data/rates.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="index.html">Swarnam<b>4U</b></a>
+  <nav class="links" aria-label="Main"><a href="index.html">Home</a><a href="trends.html" aria-current="page">Trends</a><a href="calculator.html">Calculator</a><a href="poster.html">Poster</a><a href="about.html">About</a><a href="contact.html">Contact</a></nav>
+</div></header>
+
+<div class="pagehead wrap"><h1>Price trends</h1>
+  <p>Gold and silver board rates recorded day by day, up to 5 years. Pick one or more series, a date range, and see the estimated upcoming rate.</p><div class="stamp" data-s="none"><span class="dot"></span><span id="stamp">Loading rates…</span></div></div>
+<main class="wrap">
+  <div class="chips" id="chips" role="group" aria-label="Choose rate series to show or compare"></div>
+  <p class="note" id="chipNote"></p>
+  <section class="section">
+    <div class="card chartpanel" id="chartPanel" data-metal="gold">
+      <div class="chead">
+        <div><div class="kicker" id="cTitle"></div><div class="big" id="cBig">–</div><div class="cmeta" id="cMeta"></div></div>
+        <div class="ctools">
+          <div class="periods" id="periods" role="group" aria-label="Date range presets">
+            <button type="button" data-p="7">1 Week</button><button type="button" data-p="30" class="on">1 Month</button><button type="button" data-p="90">3 Months</button><button type="button" data-p="180">6 Months</button><button type="button" data-p="365">1 Year</button><button type="button" data-p="1826">5 Years</button><button type="button" data-p="0">All</button>
+          </div>
+          <button class="iconbtn" id="fsBtn" type="button" aria-label="Expand chart to full screen" title="Expand chart"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg> Expand</button>
+          <button class="iconbtn" id="closeBtn" type="button" aria-label="Exit full screen" title="Exit full screen" hidden>✕ Close</button>
+        </div>
+      </div>
+      <div class="range">
+        <div><label for="fromD">From</label><input type="date" id="fromD"></div>
+        <div><label for="toD">To</label><input type="date" id="toD"></div>
+      </div>
+      <div class="fcrow">
+        <label class="fcsw"><input type="checkbox" id="fcOn" checked> Show upcoming rate (forecast)</label>
+        <div class="periods" id="fcHor" role="group" aria-label="How far ahead to forecast">
+          <button type="button" data-h="7">Next 1 Week</button><button type="button" data-h="30" class="on">Next 1 Month</button><button type="button" data-h="90">Next 3 Months</button>
+        </div>
+      </div>
+      <div class="plot" id="plot">
+        <svg id="chart" role="img" aria-label="Rate trend chart. Hover or touch to see each day."></svg>
+        <div class="tip" id="tip" hidden></div>
+        <div class="empty" id="cEmpty" hidden></div>
+      </div>
+    </div>
+    <dl class="stats" id="stats"></dl>
+    <h2 style="margin-top:30px">Recent records</h2>
+    <div class="card scroll"><table class="tbl"><thead><tr><th>Date</th><th id="histHead">Rate per gram</th><th>Change</th></tr></thead><tbody id="hist"></tbody></table></div>
+    <p class="note" id="basis"></p>
+  </section>
+</main>
+<footer><div class="wrap">
+  <span>© <span id="yr"></span> Swarnam4U · Kerala<br>Rates are for reference. Confirm the final price with your jeweller.</span>
+  <a class="pill" href="mailto:swarnam4u@gmail.com">✉ swarnam4u@gmail.com</a>
+</div></footer>
+<script src="assets/site.js"></script>
+<script>
+(function(){
+var S=Swarnam,$=S.$,period=30,from=null,to=null,fcOn=true,fcDays=30,SER={},order=["gold22","gold24","silver999","silver925"],sel=[],view=null,
+panel=$("chartPanel"),plot=$("plot");
+var COL={gold22:"#8b0f1f",gold24:"#c98a1b",silver999:"#3f5573",silver925:"#7c8a9c"};
+var LABELS={7:"1 week",30:"1 month",90:"3 months",180:"6 months",365:"1 year",1826:"5 years",0:"all recorded history"};
+function pad(n){return n<10?"0"+n:""+n}
+function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function addDays(s,n){var d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return iso(d)}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+/* ---- data: only real recorded points, only valid numbers ---- */
+function load(){
+  SER={};var d=S.data,src=(d&&d.series)||{};
+  order.forEach(function(id){var s=src[id];if(!s||!Array.isArray(s.history))return;
+    var h=s.history.filter(function(r){return r&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&isFinite(r.rate)&&+r.rate>0}).map(function(r){return{date:r.date,rate:+r.rate}}).sort(function(a,b){return a.date<b.date?-1:1});
+    SER[id]={id:id,label:s.label||id,metal:s.metal,note:s.note||"",all:h}})}
+function ready(id){return SER[id]&&SER[id].all.length>=2}
+function lastDate(){var m="";sel.forEach(function(id){var a=SER[id].all;if(a.length&&a[a.length-1].date>m)m=a[a.length-1].date});return m||null}
+function firstDate(){var m=null;sel.forEach(function(id){var a=SER[id].all;if(a.length&&(!m||a[0].date<m))m=a[0].date});return m}
+function preset(p){period=p;var l=lastDate();if(!l){from=to=null;return}to=l;from=p?addDays(l,-p):firstDate()}
+function slice(id){return SER[id].all.filter(function(r){return(!from||r.date>=from)&&(!to||r.date<=to)})}
+function mixed(){var m={};sel.forEach(function(id){m[SER[id].metal]=1});return Object.keys(m).length>1}
+/* ---- forecast: damped trend of the last ~120 recorded days + normal daily movement (90% range). An estimate, never a published rate ---- */
+function forecast(all,H){
+  if(!all||all.length<10||H<1)return null;
+  var win=all.slice(-120),D=function(x){return Math.round(new Date(x+"T00:00:00").getTime()/864e5)},
+  xs=win.map(function(r){return D(r.date)}),ys=win.map(function(r){return Math.log(r.rate)}),n=xs.length,mx=0,my=0,i;
+  for(i=0;i<n;i++){mx+=xs[i];my+=ys[i]}mx/=n;my/=n;
+  var sxx=0,sxy=0;for(i=0;i<n;i++){sxx+=(xs[i]-mx)*(xs[i]-mx);sxy+=(xs[i]-mx)*(ys[i]-my)}
+  var b=sxx?sxy/sxx:0;b=Math.max(-.004,Math.min(.004,b));
+  var rs=[];for(i=1;i<n;i++){rs.push((ys[i]-ys[i-1])/Math.sqrt(xs[i]-xs[i-1]||1))}
+  var m=0;rs.forEach(function(v){m+=v});m/=rs.length;var v2=0;rs.forEach(function(v){v2+=(v-m)*(v-m)});
+  var sd=Math.sqrt(v2/Math.max(1,rs.length-1)),last=all[all.length-1],phi=.97,cum=0,out=[];
+  for(var k=1;k<=H;k++){cum+=Math.pow(phi,k);var c=last.rate*Math.exp(b*cum),w=1.645*sd*Math.sqrt(k);
+    out.push({date:addDays(last.date,k),rate:c,lo:c*Math.exp(-w),hi:c*Math.exp(w)})}
+  return out}
+/* ---- chips ---- */
+function drawChips(){
+  var c=$("chips"),miss=[];
+  c.innerHTML=order.filter(function(id){return SER[id]}).map(function(id){
+    var ok=ready(id),on=sel.indexOf(id)>=0;if(!ok)miss.push(SER[id]);
+    return '<button type="button" class="chip'+(on?" on":"")+'" data-id="'+id+'" aria-pressed="'+on+'"'+(ok?"":" disabled")+'><i style="background:'+COL[id]+'"></i>'+esc(SER[id].label)+(ok?"":" · needs more days")+'</button>'}).join("");
+  $("chipNote").textContent=miss.length?miss.map(function(s){return s.label+": "+s.all.length+" day recorded so far"}).join(" · ")+". A trend needs at least 2 recorded days; it will appear as daily records build up.":"";
+  c.querySelectorAll(".chip").forEach(function(b){b.onclick=function(){var id=b.dataset.id,i=sel.indexOf(id);
+    if(i>=0){if(sel.length>1)sel.splice(i,1)}else sel.push(id);
+    if(period!==null)preset(period);render()}})}
+function syncInputs(){
+  var l=lastDate(),f=firstDate(),fi=$("fromD"),ti=$("toD"),none=!l;
+  fi.disabled=ti.disabled=none;fi.min=ti.min=none?"":f;fi.max=ti.max=none?"":l;fi.value=from?(f&&from<f?f:from):"";ti.value=to||"";
+  document.querySelectorAll("#periods button").forEach(function(b){var p=+b.dataset.p;b.classList.toggle("on",period!==null&&p===period);b.style.opacity=(p&&l&&f&&addDays(l,-p)<f)?".55":"";b.title=(p&&l&&f&&addDays(l,-p)<f)?"Only data from "+f+" is recorded so far":""})}
+/* ---- axis helpers ---- */
+function nice(lo,hi,n){var span=(hi-lo)||1,raw=span/n,pw=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/pw,st=(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*pw,a=Math.floor(lo/st)*st,t=[];for(var v=a;v<=hi+st*.999;v+=st)t.push(Math.round(v*1e6)/1e6);return{ticks:t,step:st}}
+function fmtTick(v,st,pct){if(pct)return(v>0?"+":"")+v.toFixed(st<1?1:0)+"%";return "₹"+(st>=1?Math.round(v).toLocaleString("en-IN"):v.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2}))}
+/* ---- stats + table for the first selected series ---- */
+function stats(cur,ser,fc){
+  var el=$("stats");if(cur.length<2){el.innerHTML="";return}
+  var f=cur[0],l=cur[cur.length-1],hi=f,lo=f,sum=0;cur.forEach(function(r){if(r.rate>hi.rate)hi=r;if(r.rate<lo.rate)lo=r;sum+=r.rate});
+  var d=l.rate-f.rate,p=d/f.rate*100;
+  function c(t,v,s,k){return '<div class="card stat"><dt>'+t+'</dt><dd'+(k?' class="'+k+'"':'')+'>'+v+'</dd><small>'+s+'</small></div>'}
+  el.innerHTML=c("Change · "+esc(ser.label),(d>=0?"+":"−")+S.inr(Math.abs(d)),(d>=0?"+":"−")+Math.abs(p).toFixed(2)+"% across "+cur.length+" recorded days",d>=0?"up":"down")+
+    c("Highest",S.inr(hi.rate),S.fmtDate(hi.date))+c("Lowest",S.inr(lo.rate),S.fmtDate(lo.date))+c("Average",S.inr(sum/cur.length),"across "+cur.length+" recorded days")+
+    c("High–low gap",S.inr(hi.rate-lo.rate),((hi.rate-lo.rate)/lo.rate*100).toFixed(1)+"% of the low");
+  if(fc&&fc.length){var a=fc[0],z=fc[fc.length-1],dz=z.rate-l.rate;
+    el.innerHTML+=c("Tomorrow (estimate)",S.inr(a.rate),"likely "+S.inr(a.lo)+" – "+S.inr(a.hi))+
+      c("In "+fc.length+" days (estimate)",S.inr(z.rate),(dz>=0?"+":"−")+S.inr(Math.abs(dz))+" vs latest · likely "+S.inr(z.lo)+" – "+S.inr(z.hi),dz>=0?"up":"down")}}
+function table(cur,ser){
+  $("histHead").textContent=ser?ser.label+" · rate per gram":"Rate per gram";
+  var b=$("hist");if(!cur.length){b.innerHTML='<tr><td colspan="3" class="mut" style="text-align:center">No records in this range</td></tr>';return}
+  var r=cur.slice(-7),base=cur.length-r.length;
+  b.innerHTML=r.map(function(x,i){var prev=cur[base+i-1],ch="–";
+    if(prev){var d=x.rate-prev.rate;ch='<span class="'+(d>=0?"up":"down")+'">'+(d>=0?"+":"−")+S.inr(Math.abs(d))+'</span>'}
+    return '<tr><td>'+S.fmtDate(x.date)+'</td><td>'+S.inr(x.rate)+'</td><td>'+ch+'</td></tr>'}).reverse().join("")}
+/* ---- chart ---- */
+function drawChart(){
+  var s=$("chart"),tip=$("tip");tip.hidden=true;s.innerHTML="";
+  var W=plot.clientWidth,H=plot.clientHeight;if(!view||W<60||H<60)return;
+  var lines=view.lines,pct=view.pct;s.setAttribute("viewBox","0 0 "+W+" "+H);
+  var full=panel.classList.contains("is-full"),fs=full?13:11.5,R=18,T=16,B=34;
+  var seen={},days=[],vals=[],cut=null;
+  lines.forEach(function(l){
+    l.pts.forEach(function(p){if(!seen[p.date]){seen[p.date]=1;days.push(p.date)}vals.push(p.y)});
+    if(l.fc){var ld=l.pts[l.pts.length-1].date;if(!cut||ld>cut)cut=ld;
+      l.fc.forEach(function(p){if(!seen[p.date]){seen[p.date]=1;days.push(p.date)}vals.push(p.y,p.ylo,p.yhi)})}});
+  days.sort();
+  var t=days.map(function(d){return new Date(d+"T00:00:00").getTime()}),t0=t[0],t1=t[t.length-1];
+  var lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals),pd=(hi-lo)*.1||Math.abs(hi)*.01||1,nt=nice(lo-pd,hi+pd,full?6:4),tk=nt.ticks,min=tk[0],max=tk[tk.length-1];
+  var labs=tk.map(function(v){return fmtTick(v,nt.step,pct)}),L=Math.max.apply(null,labs.map(function(x){return x.length}))*(fs*.62)+16;
+  var x=function(ms){return t1===t0?L+(W-L-R)/2:L+(ms-t0)/(t1-t0)*(W-L-R)},y=function(n){return H-B-(n-min)/(max-min)*(H-T-B)};
+  var tm0=function(d){return new Date(d+"T00:00:00").getTime()};
+  var grid="";tk.forEach(function(v,i){var yy=y(v);grid+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="rgba(139,15,31,.15)" stroke-dasharray="3 4"/><text x="'+(L-8)+'" y="'+(yy+4)+'" text-anchor="end" font-size="'+fs+'" fill="#7b6a6c">'+labs[i]+'</text>'});
+  var span=(t1-t0)/864e5,n=Math.max(2,Math.min(8,Math.floor((W-L-R)/115)+1)),xl="",lseen={};
+  for(var k=0;k<n;k++){var tm=t0+Math.round((t1-t0)/864e5*k/(n-1))*864e5,lb=new Date(tm).toLocaleDateString("en-IN",span>200?{day:"numeric",month:"short",year:"2-digit"}:{day:"numeric",month:"short"});
+    if(lseen[lb])continue;lseen[lb]=1;
+    xl+='<text x="'+x(tm)+'" y="'+(H-10)+'" text-anchor="'+(k===0?"start":k===n-1?"end":"middle")+'" font-size="'+fs+'" fill="#7b6a6c">'+lb+'</text>'}
+  var body="";
+  if(cut){var cx0=x(tm0(cut));body+='<line x1="'+cx0+'" x2="'+cx0+'" y1="'+T+'" y2="'+(H-B)+'" stroke="#7b6a6c" stroke-opacity=".55" stroke-dasharray="2 4"/><text x="'+(cx0+6)+'" y="'+(T+10)+'" font-size="'+fs+'" fill="#7b6a6c" font-style="italic">Forecast →</text>'}
+  lines.forEach(function(l,i){
+    var pts=l.pts.map(function(p){return[x(tm0(p.date)),y(p.y)]});
+    var d=pts.map(function(p,j){return(j?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)}).join(" ");
+    if(lines.length===1)body+='<defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+l.col+'" stop-opacity=".35"/><stop offset="1" stop-color="'+l.col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+pts[pts.length-1][0]+' '+(H-B)+' L'+pts[0][0]+' '+(H-B)+' Z" fill="url(#gf)"/>';
+    body+='<path d="'+d+'" fill="none" stroke="'+l.col+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    if(pts.length<=45)pts.forEach(function(p){body+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="#fff" stroke="'+l.col+'" stroke-width="1.8"/>'});
+    if(l.fc){var an=pts[pts.length-1],up=l.fc.map(function(p){return[x(tm0(p.date)),y(p.yhi)]}),dn=l.fc.map(function(p){return[x(tm0(p.date)),y(p.ylo)]}).reverse(),
+      mid=l.fc.map(function(p){return[x(tm0(p.date)),y(p.y)]});
+      var poly="M"+an[0].toFixed(1)+" "+an[1].toFixed(1)+up.map(function(p){return" L"+p[0].toFixed(1)+" "+p[1].toFixed(1)}).join("")+dn.map(function(p){return" L"+p[0].toFixed(1)+" "+p[1].toFixed(1)}).join("")+" Z";
+      body+='<path d="'+poly+'" fill="'+l.col+'" fill-opacity=".13" stroke="none"/>';
+      body+='<path d="M'+an[0].toFixed(1)+" "+an[1].toFixed(1)+mid.map(function(p){return" L"+p[0].toFixed(1)+" "+p[1].toFixed(1)}).join("")+'" fill="none" stroke="'+l.col+'" stroke-width="2.5" stroke-dasharray="7 6" stroke-linecap="round"/>';
+      var e=mid[mid.length-1];body+='<circle cx="'+e[0]+'" cy="'+e[1]+'" r="4.5" fill="'+l.col+'" stroke="#fff" stroke-width="1.5"/>'}});
+  s.innerHTML=grid+xl+body+'<line id="vx" y1="'+T+'" y2="'+(H-B)+'" stroke="#8b0f1f" stroke-opacity=".5" visibility="hidden"/>';
+  var vx=$("vx");
+  function move(e){
+    var r=s.getBoundingClientRect(),px=e.clientX-r.left,bi=0,bd=1e9,i;
+    for(i=0;i<t.length;i++){var dd=Math.abs(x(t[i])-px);if(dd<bd){bd=dd;bi=i}}
+    var cx=x(t[bi]),day=days[bi];vx.setAttribute("x1",cx);vx.setAttribute("x2",cx);vx.setAttribute("visibility","visible");
+    var h=S.fmtDate(day);
+    lines.forEach(function(l){var p=l.pts.filter(function(q){return q.date===day})[0],f=!p&&l.fc?l.fc.filter(function(q){return q.date===day})[0]:null;
+      if(f)h+='<span class="trow"><i style="background:'+l.col+';opacity:.5"></i>'+esc(l.label)+' (forecast) <b>≈ '+S.inr(f.rate)+(pct?" ("+(f.y>=0?"+":"−")+Math.abs(f.y).toFixed(2)+"%)":"")+'</b></span><span class="trow" style="color:#7b6a6c">likely '+S.inr(f.lo)+' – '+S.inr(f.hi)+'</span>';
+      else h+='<span class="trow"><i style="background:'+l.col+'"></i>'+esc(l.label)+' <b>'+(p?S.inr(p.rate)+(pct?" ("+(p.y>=0?"+":"−")+Math.abs(p.y).toFixed(2)+"%)":""):"no record")+'</b></span>'});
+    tip.hidden=false;tip.innerHTML=h;var tw=tip.offsetWidth/2;tip.style.left=Math.max(tw,Math.min(W-tw,cx))+"px"}
+  function leave(){vx.setAttribute("visibility","hidden");tip.hidden=true}
+  s.onpointermove=move;s.onpointerdown=move;s.onpointerleave=leave}
+/* ---- render ---- */
+function render(){
+  load();var msg=null,first=sel.length?SER[sel[0]]:null;
+  drawChips();syncInputs();
+  var bad=from&&to&&from>to,pct=mixed(),lines=[],cur=[];
+  if(!first){msg=["No trend history yet","Trends are built only from real daily rates recorded by the site. They will appear once at least two days have been recorded."]}
+  else if(bad)msg=["Check the date range","The start date must be on or before the end date."];
+  else{
+    sel.forEach(function(id){var h=slice(id);if(h.length<2)return;var b=h[0].rate;
+      var ln={id:id,label:SER[id].label,col:COL[id],pts:h.map(function(r){return{date:r.date,rate:r.rate,y:pct?(r.rate-b)/b*100:r.rate}})},a=SER[id].all;
+      if(fcOn&&(!to||to>=a[a.length-1].date)){var fc=forecast(a,fcDays);
+        if(fc){ln.fcRaw=fc;ln.fc=fc.map(function(q){var Y=function(v){return pct?(v-b)/b*100:v};return{date:q.date,rate:q.rate,lo:q.lo,hi:q.hi,y:Y(q.rate),ylo:Y(q.lo),yhi:Y(q.hi)}})}}
+      lines.push(ln)});
+    cur=slice(first.id);
+    if(!lines.length)msg=["Not enough data in this range","At least two recorded days are needed to draw a trend. Try a wider range."]}
+  var e=$("cEmpty");e.hidden=!msg;if(msg)e.innerHTML="<b>"+msg[0]+"</b>"+msg[1];
+  view=msg?null:{lines:lines,pct:pct};
+  $("cTitle").textContent=sel.length?sel.map(function(id){return SER[id].label}).join(" vs ")+(pct?" · % change in range":" · INR per gram"):"Gold and silver trends";
+  if(first&&cur.length){var l=cur[cur.length-1],f=cur[0],d=l.rate-f.rate,p=d/f.rate*100;
+    $("cBig").textContent=S.inr(l.rate);
+    $("cMeta").innerHTML=cur.length>1?'<span class="'+(d>=0?"up":"down")+'">'+(d>=0?"▲":"▼")+" "+S.inr(Math.abs(d))+" ("+(p>=0?"+":"−")+Math.abs(p).toFixed(2)+"%)</span> · "+esc(first.label)+" · "+(period&&!(addDays(lastDate(),-period)<firstDate())?LABELS[period]:(period&&LABELS[period]+" selected, only "+cur.length+" recorded days available")||"selected range"):"Single record · "+S.fmtDate(f.date)}
+  else{$("cBig").textContent="–";$("cMeta").textContent=""}
+  /* honest range note: the chosen range may reach back further than the records */
+  var fd=firstDate(),ld=lastDate(),note="";
+  if(fd&&period&&addDays(ld,-period)<fd)note="Records for the selected series begin on "+S.fmtDate(fd)+", so the "+LABELS[period]+" range shows all "+(first?first.all.length:0)+" recorded days. Earlier prices are not filled in.";
+  else if(fd)note="Showing real recorded rates from "+S.fmtDate(fd)+". Days without a recorded update are not filled in.";
+  if(sel.length)note+=" "+sel.map(function(id){return SER[id].label+": "+SER[id].note}).filter(function(x){return/Calculated/.test(x)}).join(" · ");
+  if(pct)note+=" Gold and silver are shown as % change because their prices are on very different scales.";
+  var fl=lines.filter(function(l){return first&&l.id===first.id})[0],anyFc=lines.some(function(l){return l.fc});
+  if(fcOn&&lines.length&&!anyFc)note+=" Forecast needs at least 10 recorded days and an end date at the latest record.";
+  if(anyFc)note+=" The dashed line and shaded area are an estimate (recent trend plus normal day-to-day movement, 90% likely range), not a published board rate. Real rates can differ on news or policy days.";
+  $("basis").textContent=note;
+  stats(cur,first,fl&&fl.fcRaw);table(cur,first);drawChart()}
+/* ---- expand / full screen ---- */
+var fsBtn=$("fsBtn"),closeBtn=$("closeBtn"),root=document.documentElement;
+function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement||null}
+function isFull(){return fsEl()===panel||panel.classList.contains("expanded")}
+function sync(){var f=isFull();panel.classList.toggle("is-full",f);fsBtn.hidden=f;closeBtn.hidden=!f;requestAnimationFrame(drawChart)}
+function openFull(){var rq=panel.requestFullscreen||panel.webkitRequestFullscreen;if(rq){try{var r=rq.call(panel);if(r&&r.then){r.catch(fallback)}return}catch(e){}}fallback()}
+function fallback(){if(fsEl())return;panel.classList.add("expanded");root.classList.add("noscroll");sync();closeBtn.focus()}
+function closeFull(){var ex=document.exitFullscreen||document.webkitExitFullscreen;if(fsEl()&&ex){try{ex.call(document)}catch(e){}}panel.classList.remove("expanded");root.classList.remove("noscroll");sync();fsBtn.focus()}
+fsBtn.addEventListener("click",openFull);closeBtn.addEventListener("click",closeFull);
+document.addEventListener("fullscreenchange",sync);document.addEventListener("webkitfullscreenchange",sync);
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&panel.classList.contains("expanded"))closeFull()});
+if(window.ResizeObserver)new ResizeObserver(function(){requestAnimationFrame(drawChart)}).observe(plot);else window.addEventListener("resize",drawChart);
+/* ---- controls ---- */
+$("fcOn").addEventListener("change",function(){fcOn=this.checked;$("fcHor").style.opacity=fcOn?"":".5";render()});
+document.querySelectorAll("#fcHor button").forEach(function(b){b.addEventListener("click",function(){fcDays=+b.dataset.h;document.querySelectorAll("#fcHor button").forEach(function(x){x.classList.toggle("on",x===b)});render()})});
+document.querySelectorAll("#periods button").forEach(function(b){b.addEventListener("click",function(){preset(+b.dataset.p);render()})});
+["fromD","toD"].forEach(function(id){$(id).addEventListener("change",function(){from=$("fromD").value||null;to=$("toD").value||null;period=null;render()})});
+var inited=false;
+S.start(function(){load();
+  if(!inited&&Object.keys(SER).length){inited=true;sel=[ready("gold22")?"gold22":(order.filter(ready)[0]||"gold22")].filter(function(id){return SER[id]});preset(period)}
+  else if(period!==null)preset(period);
+  render()});
+})();
+</script>
+</body>
+</html>

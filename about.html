@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About – Swarnam4U</title>
+<meta name="description" content="About Swarnam4U: a Kerala gold, silver and platinum rate board using AKGSMA board rates, with supported metals and purities.">
+<meta name="theme-color" content="#8b0f1f">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://akgsma.com"><link rel="preconnect" href="https://r.jina.ai"><link rel="preconnect" href="https://api.allorigins.win"><link rel="preconnect" href="https://corsproxy.io">
+<link rel="preload" href="data/rates.json" as="fetch" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="index.html">Swarnam<b>4U</b></a>
+  <nav class="links" aria-label="Main"><a href="index.html">Home</a><a href="trends.html">Trends</a><a href="calculator.html">Calculator</a><a href="poster.html">Poster</a><a href="about.html" aria-current="page">About</a><a href="contact.html">Contact</a></nav>
+</div></header>
+
+<div class="pagehead wrap"><h1>About Swarnam4U</h1>
+  <p>A simple rate board for buyers, sellers and jewellers in Kerala.</p><div class="stamp" data-s="none"><span class="dot"></span><span id="stamp">Loading rates…</span></div></div>
+<main class="wrap">
+  <section class="section">
+    <div class="prose"><p>Swarnam4U shows the Kerala board rate for gold, silver and platinum, so you can check the day’s price before you step into a shop. It is built for reference: a quick, clear look at the rate, its recent movement, and a calculator for estimating metal value.</p></div>
+    <div class="cols">
+      <div class="card"><h3>Purpose</h3><p>Make the daily Kerala board rate easy to read on any phone or computer, with the unit, currency and time of the last update always shown.</p></div>
+      <div class="card"><h3>Supported metals</h3><ul><li>Gold: 24K (999), 22K (916), 18K (750), 14K (585)</li><li>Silver: 999 and 925</li><li>Platinum: 950</li></ul><p class="note">The calculator also offers other common fineness values, worked out from the reference board rate.</p></div>
+      <div class="card"><h3>Rate information</h3><p>The All Kerala Gold &amp; Silver Merchants Association (AKGSMA) sets the daily board rate. This site reads that rate and refreshes it automatically on a schedule. Rates are in Indian rupees per gram and exclude GST, making charges and hallmarking.</p></div>
+      <div class="card"><h3>If an update fails</h3><p>The last verified rate stays on screen with its own timestamp, and a notice appears if it is old. When no verified rate exists, the site says so instead of showing a placeholder number.</p></div>
+    </div>
+    <h2 style="margin-top:34px">Current data feed</h2>
+    <div class="card"><dl class="meta" id="feed" style="padding:22px 26px"></dl></div>
+    <p class="note">Rates are for reference. Confirm the final price with your jeweller before you buy or sell. <a href="contact.html">Contact us</a> about any error.</p>
+  </section>
+</main>
+<footer><div class="wrap">
+  <span>© <span id="yr"></span> Swarnam4U · Kerala<br>Rates are for reference. Confirm the final price with your jeweller.</span>
+  <a class="pill" href="mailto:swarnam4u@gmail.com">✉ swarnam4u@gmail.com</a>
+</div></footer>
+<script src="assets/site.js"></script>
+<script>
+(function(){
+var S=Swarnam,$=S.$;
+S.start(function(){
+  var d=S.data,ok=S.hasRates();
+  function r(k,v){return '<div><dt>'+k+'</dt><dd>'+v+'</dd></div>'}
+  $("feed").innerHTML=r("Source",(d&&d.source)||"AKGSMA Kerala")+r("Currency",(d&&d.currency)||"INR")+r("Pricing unit","per "+((d&&d.unit)||"gram"))+
+    r("Last successful update",ok?S.fmtStamp(d.updated):"Not available yet");
+});
+})();
+</script>
+</body>
+</html>
