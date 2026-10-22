@@ -115,7 +115,7 @@ function drawChips(){
     return '<button type="button" class="chip'+(on?" on":"")+'" data-id="'+id+'" aria-pressed="'+on+'"'+(ok?"":" disabled")+'><i style="background:'+COL[id]+'"></i>'+esc(SER[id].label)+(ok?"":" · needs more days")+'</button>'}).join("");
   $("chipNote").textContent=miss.length?miss.map(function(s){return s.label+": "+s.all.length+" day recorded so far"}).join(" · ")+". A trend needs at least 2 recorded days; it will appear as daily records build up.":"";
   c.querySelectorAll(".chip").forEach(function(b){b.onclick=function(){var id=b.dataset.id,i=sel.indexOf(id);
-    if(i>=0){if(sel.length>1)sel.splice(i,1)}else sel.push(id);
+    sel=[id];
     if(period!==null)preset(period);render()}})}
 function syncInputs(){
   var l=lastDate(),f=firstDate(),fi=$("fromD"),ti=$("toD"),none=!l;
