@@ -1,5 +1,6 @@
 # Swarnam4U
 Static Kerala gold / silver / platinum rate site (AKGSMA board rates), hosted on GitHub Pages.
+swarnam4u.onrender.com
 
 Pages: `index.html` (current rates), `trends.html`, `calculator.html`, `about.html`, `contact.html`.
 Shared files: `assets/site.css`, `assets/site.js`. Data: `data/rates.json`.
