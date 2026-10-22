@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-21T11:30:00+05:30",
+  "updated": "2026-10-22T06:29:05+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
@@ -32,7 +32,7 @@
   },
   "silver": {
     "Silver · 999": {
-      "today": 230,
+      "today": 230.0,
       "yesterday": null,
       "date": "2026-10-21",
       "source": "AKGSMA Kerala"
@@ -44,13 +44,20 @@
       "source": "AKGSMA Kerala (calculated from 999)"
     },
     "Silver · 800": {
-      "today": 184,
+      "today": 184.0,
       "yesterday": null,
       "date": "2026-10-21",
       "source": "AKGSMA Kerala (calculated from 999)"
     }
   },
-  "platinum": {},
+  "platinum": {
+    "Platinum · 950": {
+      "today": 4953.0,
+      "yesterday": 4953.0,
+      "date": "2026-10-22",
+      "source": "Goodreturns Kerala"
+    }
+  },
   "history_basis": {
     "gold": "22K · 916",
     "silver": "Silver · 925",
@@ -97,6 +104,10 @@
       {
         "date": "2026-10-21",
         "rate": 13390.0
+      },
+      {
+        "date": "2026-10-22",
+        "rate": 13389.0
       }
     ],
     "silver": [
@@ -105,7 +116,16 @@
         "rate": 212.75
       }
     ],
-    "platinum": []
+    "platinum": [
+      {
+        "date": "2026-10-21",
+        "rate": 4953.0
+      },
+      {
+        "date": "2026-10-22",
+        "rate": 4953.0
+      }
+    ]
   },
   "series": {
     "gold22": {
@@ -153,6 +173,10 @@
         {
           "date": "2026-10-21",
           "rate": 13390.0
+        },
+        {
+          "date": "2026-10-22",
+          "rate": 13389.0
         }
       ]
     },
@@ -201,6 +225,10 @@
         {
           "date": "2026-10-21",
           "rate": 14608.0
+        },
+        {
+          "date": "2026-10-22",
+          "rate": 14607.0
         }
       ]
     },
@@ -212,7 +240,7 @@
       "history": [
         {
           "date": "2026-10-21",
-          "rate": 230
+          "rate": 230.0
         }
       ]
     },
@@ -228,5 +256,10 @@
         }
       ]
     }
+  },
+  "spot": {
+    "gold_24k_per_gram": 12514.5,
+    "usd_per_oz": 4114.899902,
+    "usd_inr": 94.593871
   }
 }
