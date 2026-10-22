@@ -136,7 +136,7 @@ input[type=date]{color-scheme:light}
 .mail{font:600 clamp(20px,4vw,30px) var(--serif);word-break:break-all}
 /* footer */
 footer{background:var(--red-d);border-top:3px solid #d9ac52;color:#e8cfd3;padding:30px 0;font-size:14px;margin-top:auto}
-footer .wrap{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 14px;justify-content:space-between;align-items:center}
 footer a.pill{color:#f0d28a;text-decoration:none;border:1px solid rgba(240,210,138,.5);padding:8px 16px;border-radius:99px}
 footer a.pill:hover{background:rgba(255,255,255,.1)}
 .stat dd.up{color:var(--up)}.stat dd.down{color:var(--down)}

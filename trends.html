@@ -63,12 +63,15 @@
 <footer><div class="wrap">
   <span>© <span id="yr"></span> Swarnam4U · Kerala<br>Rates are for reference. Confirm the final price with your jeweller.</span>
   <a class="pill" href="mailto:swarnam4u@gmail.com">✉ swarnam4u@gmail.com</a>
+  <a class="pill" href="https://github.com/rishalaliii/swarnam4u" target="_blank" rel="noopener noreferrer" aria-label="Rishal Ali on GitHub">Rishal Ali · GitHub</a>
 </div></footer>
 <script src="assets/site.js"></script>
+<script>Swarnam.metals=["gold","silver"];</script>
 <script>
 (function(){
 var S=Swarnam,$=S.$,period=30,from=null,to=null,fcOn=true,fcDays=30,SER={},order=["gold22","gold24","silver999","silver925"],sel=[],view=null,
 panel=$("chartPanel"),plot=$("plot");
+var LIVE={gold22:["gold","22K · 916"],gold24:["gold","24K · 999"],silver999:["silver","Silver · 999"],silver925:["silver","Silver · 925"]};
 var COL={gold22:"#8b0f1f",gold24:"#c98a1b",silver999:"#3f5573",silver925:"#7c8a9c"};
 var LABELS={7:"1 week",30:"1 month",90:"3 months",180:"6 months",365:"1 year",1826:"5 years",0:"all recorded history"};
 function pad(n){return n<10?"0"+n:""+n}
@@ -80,6 +83,9 @@ function load(){
   SER={};var d=S.data,src=(d&&d.series)||{};
   order.forEach(function(id){var s=src[id];if(!s||!Array.isArray(s.history))return;
     var h=s.history.filter(function(r){return r&&/^\d{4}-\d{2}-\d{2}$/.test(r.date)&&isFinite(r.rate)&&+r.rate>0}).map(function(r){return{date:r.date,rate:+r.rate}}).sort(function(a,b){return a.date<b.date?-1:1});
+    var live=LIVE[id],e=live&&S.data&&S.data[live[0]]&&S.data[live[0]][live[1]];
+    if(e&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")&&+e.today>0&&(!h.length||e.date>=h[h.length-1].date)){   /* today's live rate becomes the newest point, so chart, range, stats and forecast follow it */
+      if(h.length&&h[h.length-1].date===e.date)h[h.length-1].rate=+e.today;else h.push({date:e.date,rate:+e.today})}
     SER[id]={id:id,label:s.label||id,metal:s.metal,note:s.note||"",all:h}})}
 function ready(id){return SER[id]&&SER[id].all.length>=2}
 function lastDate(){var m="";sel.forEach(function(id){var a=SER[id].all;if(a.length&&a[a.length-1].date>m)m=a[a.length-1].date});return m||null}
@@ -234,10 +240,12 @@ if(window.ResizeObserver)new ResizeObserver(function(){requestAnimationFrame(dra
 /* ---- controls ---- */
 $("fcOn").addEventListener("change",function(){fcOn=this.checked;$("fcHor").style.opacity=fcOn?"":".5";render()});
 document.querySelectorAll("#fcHor button").forEach(function(b){b.addEventListener("click",function(){fcDays=+b.dataset.h;document.querySelectorAll("#fcHor button").forEach(function(x){x.classList.toggle("on",x===b)});render()})});
-document.querySelectorAll("#periods button").forEach(function(b){b.addEventListener("click",function(){preset(+b.dataset.p);render()})});
-["fromD","toD"].forEach(function(id){$(id).addEventListener("change",function(){from=$("fromD").value||null;to=$("toD").value||null;period=null;render()})});
-var inited=false;
-S.start(function(){load();
+document.querySelectorAll("#periods button").forEach(function(b){b.addEventListener("click",function(){toPinned=false;preset(+b.dataset.p);render()})});
+["fromD","toD"].forEach(function(id){$(id).addEventListener("change",function(){from=$("fromD").value||null;to=$("toD").value||null;period=null;toPinned=!!(to&&lastDate()&&to<lastDate());render()})});   /* To = latest date unless you deliberately pick an earlier end date */
+var inited=false,toPinned=false;
+S.start(function(){var prev=lastDate();load();
+  if(period===null&&!toPinned&&lastDate())to=lastDate();   /* custom range that ended at the latest record follows new records */
+  
   if(!inited&&Object.keys(SER).length){inited=true;sel=[ready("gold22")?"gold22":(order.filter(ready)[0]||"gold22")].filter(function(id){return SER[id]});preset(period)}
   else if(period!==null)preset(period);
   render()});

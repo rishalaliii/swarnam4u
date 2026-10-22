@@ -59,9 +59,9 @@ function render(){
   if(!p.ok){cv.hidden=true;status(p.error,"err");return Promise.resolve(false)}
   if(!cfg.tpl){status("Poster designs could not be loaded. Check data/poster-templates.json.","err");return Promise.resolve(false)}
   var now=new Date();tpl=cfg.tpl.templates[todayIndex(now)];
-  return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;cv.width=img.naturalWidth;cv.height=img.naturalHeight;
+  return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;if(cv.width!==img.naturalWidth)cv.width=img.naturalWidth;if(cv.height!==img.naturalHeight)cv.height=img.naturalHeight;
     draw(cv.getContext("2d"),cv.width,cv.height,img,tpl,cfg.tpl.layout,p,now);
-    status(p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster ready – rates from "+p.source+".",p.stale?"warn":"ok");
+    status(p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster updated automatically · rates from "+p.source+" · "+C.dateLabel(p.updated)+", "+C.timeLabel(p.updated),p.stale?"warn":"ok");
     return true},
     function(e){status(e.message,"err");return false})}
 function blob(){return render().then(function(ok){if(!ok)throw new Error("poster not ready");return new Promise(function(res,rej){$("poster").toBlob(function(b){b?res(b):rej(new Error("export failed"))},"image/png")})})}

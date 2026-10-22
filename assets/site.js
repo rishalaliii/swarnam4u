@@ -190,7 +190,7 @@ S.live=function(ready){
     /* purities the board does not publish are calculated from its 22K rate, exactly like Asian Jewellery does */
     n+=derive();
     S.liveFail=!n;
-    if(n){S.liveAt=new Date().toISOString();S.data.live=S.liveAt;if(!S.data.updated)S.data.updated=S.liveAt}
+    if(n){S.liveAt=new Date().toISOString();S.data.live=S.liveAt;S.data.updated=S.liveAt}   /* "last updated" = the moment fresh rates were really fetched */
     return n;
   });
 };
@@ -204,10 +204,10 @@ S.load=function(){
       var nd=JSON.parse(t),live=S.data&&S.data.live;raw=t;
       ["gold","silver","platinum"].forEach(function(g){var old=(S.data&&S.data[g])||{};nd[g]=nd[g]||{};
         Object.keys(old).forEach(function(k){var n=nd[g][k];if(!n||(n.date||"")<(old[k].date||""))nd[g][k]=old[k]})});   /* keep newer saved/live values over an older or empty file */
-      if(S.data&&S.data.updated&&(!nd.updated||nd.updated<S.data.updated))nd.updated=S.data.updated;
+      if(S.data&&S.data.updated&&(!nd.updated||new Date(nd.updated)<new Date(S.data.updated)))nd.updated=S.data.updated;
       Object.keys(S.ov).forEach(function(k){var a=k.split("|");nd[a[0]]=nd[a[0]]||{};var o=nd[a[0]][a[1]];
         if(!o||o.date<=S.ov[k].date)nd[a[0]][a[1]]=S.ov[k]});                  /* live values outrank an older file */
-      if(S.liveAt)nd.live=S.liveAt;if(!nd.updated&&S.liveAt)nd.updated=S.liveAt;
+      if(S.liveAt){nd.live=S.liveAt;if(!nd.updated||new Date(nd.updated)<new Date(S.liveAt))nd.updated=S.liveAt}
       S.data=nd;save();return true})
     .catch(function(){S.error=!S.data;return false})
     .then(function(changed){S.renderStamp();if(changed)S.subs.forEach(function(f){f()})});
@@ -228,9 +228,13 @@ S.start=function(cb){S.subs.push(cb);
   /* open: paint the last real rates this browser saved (never invented) so the page is never blank, and fetch the latest at the same instant */
   try{var k=localStorage.getItem("s4u-cache");if(k&&!S.data){var c=JSON.parse(k);if(c&&c.updated){S.data=c;delete S.data.live;S.renderStamp();cb()}}}catch(e){}
   S.refresh(true);                                           /* file + live check start immediately */
-  setInterval(function(){if(!document.hidden)S.refresh(false)},30000);
+  setInterval(function(){if(!document.hidden)S.refresh(false)},20000);
   document.addEventListener("visibilitychange",function(){if(!document.hidden)S.refresh(false)});
   window.addEventListener("online",function(){S.refresh(true)});
+  /* IST midnight: new date -> fetch fresh rates and redraw everything (poster date/design, trends range) without a reload */
+  var day=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+  setInterval(function(){var d=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+    if(d!==day){day=d;S.lastLive=0;S.subs.forEach(function(f){f()});S.refresh(true)}},15000);
   window.addEventListener("focus",function(){S.refresh(false)});
 };
 
