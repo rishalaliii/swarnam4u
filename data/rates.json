@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-24T23:57:30+05:30",
+  "updated": "2026-10-25T02:37:26+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
@@ -53,8 +53,8 @@
   "platinum": {
     "Platinum · 950": {
       "today": 4725.0,
-      "yesterday": 4757.0,
-      "date": "2026-10-24",
+      "yesterday": 4725.0,
+      "date": "2026-10-25",
       "source": "Goodreturns Kerala"
     }
   },
@@ -151,6 +151,10 @@
       },
       {
         "date": "2026-10-24",
+        "rate": 4725.0
+      },
+      {
+        "date": "2026-10-25",
         "rate": 4725.0
       }
     ]
