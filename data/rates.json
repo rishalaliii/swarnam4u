@@ -1,53 +1,53 @@
 {
-  "updated": "2026-10-25T06:47:42+05:30",
+  "updated": "2026-10-25T11:48:19+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
   "unit": "gram",
   "gold": {
     "22K · 916": {
-      "today": 13070,
-      "yesterday": 13060,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala"
+      "today": 12973,
+      "yesterday": 13070,
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate)"
     },
     "18K · 750": {
-      "today": 10695,
-      "yesterday": 10690,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala"
+      "today": 10622,
+      "yesterday": 10695,
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate)"
     },
     "24K · 999": {
-      "today": 14258,
-      "yesterday": 14247,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala (calculated from 22K)"
+      "today": 14152,
+      "yesterday": 14258,
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 22K)"
     },
     "14K · 585": {
-      "today": 8347,
-      "yesterday": 8341,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala (calculated from 22K)"
+      "today": 8285,
+      "yesterday": 8347,
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 22K)"
     }
   },
   "silver": {
     "Silver · 999": {
       "today": 220.0,
       "yesterday": 220.0,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala"
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate)"
     },
     "Silver · 925": {
       "today": 203.5,
       "yesterday": 203.5,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala (calculated from 999)"
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 999)"
     },
     "Silver · 800": {
       "today": 176.0,
       "yesterday": 176.0,
-      "date": "2026-10-24",
-      "source": "AKGSMA Kerala (calculated from 999)"
+      "date": "2026-10-25",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 999)"
     }
   },
   "platinum": {
@@ -137,6 +137,10 @@
       },
       {
         "date": "2026-10-24",
+        "rate": 203.5
+      },
+      {
+        "date": "2026-10-25",
         "rate": 203.5
       }
     ],
@@ -313,6 +317,10 @@
         {
           "date": "2026-10-24",
           "rate": 220.0
+        },
+        {
+          "date": "2026-10-25",
+          "rate": 220.0
         }
       ]
     },
@@ -336,6 +344,10 @@
         },
         {
           "date": "2026-10-24",
+          "rate": 203.5
+        },
+        {
+          "date": "2026-10-25",
           "rate": 203.5
         }
       ]
