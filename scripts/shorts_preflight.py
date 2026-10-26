@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Safe live-rate preflight for the Swarnam4U Shorts project.
 
-Never edits the rate snapshot and never uploads to YouTube. It ensures
-AKGSMA's board date matches the current date in Kerala and requires the
-board's 916, 750 and 999 values to be present before a production render.
+This check never changes data/rates.json and never uploads to YouTube.
+It requires today's actual AKGSMA board values and verifies that the checked-in
+snapshot values and each record's own date agree with the live board.
 """
 from __future__ import annotations
 import datetime as dt
@@ -63,22 +63,38 @@ def main() -> int:
         report["rates"] = rates
         if board_date != now.date().isoformat():
             raise ValueError(f"AKGSMA board date is {board_date}; today in Kerala is {now.date().isoformat()}. Do not publish as today's rate.")
-        for key in ("gold_22k_916", "gold_18k_750", "silver_999"):
+        required = ("gold_22k_916", "gold_18k_750", "silver_999")
+        for key in required:
             if rates.get(key) is None or rates[key] <= 0:
                 raise ValueError(f"Required published rate missing: {key}")
+        checks = (
+            ("gold", "22K · 916", "gold_22k_916"),
+            ("gold", "18K · 750", "gold_18k_750"),
+            ("silver", "Silver · 999", "silver_999"),
+        )
+        for group, label, key in checks:
+            item = saved.get(group, {}).get(label, {})
+            if item.get("date") != board_date:
+                raise ValueError(f"Saved {label} record date is {item.get('date')}; board date is {board_date}.")
+            try:
+                stored_value = float(item.get("today"))
+            except (TypeError, ValueError):
+                raise ValueError(f"Saved rate missing or invalid for {label}.")
+            if abs(stored_value - float(rates[key])) > 0.01:
+                raise ValueError(f"Saved {label} value ({stored_value:g}) differs from live board value ({rates[key]:g}).")
         saved_date = saved.get("updated", "")[:10]
         if saved_date != board_date:
-            raise ValueError(f"Stored data snapshot date is {saved_date or 'missing'}, but live board date is {board_date}. Refresh rates and verify before rendering.")
+            raise ValueError(f"Stored snapshot timestamp date is {saved_date or 'missing'}, but live board date is {board_date}.")
         report["status"] = "PREFLIGHT_PASSED"
-        report["reason"] = "Current board date and required published rates verified. Render/upload remain disabled in this starter."
-        print("PREFLIGHT PASSED — rates/date only; rendering and uploads are not enabled.")
-        print(json.dumps(report, ensure_ascii=False, indent=2))
+        report["reason"] = "Current board date and saved published rates match the live board. Render/upload remain disabled in this starter."
+        print("PREFLIGHT PASSED — live date and stored prices verified; rendering and uploads remain disabled.")
     except Exception as exc:
         report["reason"] = str(exc)
         print(f"PREFLIGHT BLOCKED: {exc}", file=sys.stderr)
+    finally:
+        OUT.parent.mkdir(parents=True, exist_ok=True)
+        OUT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(report, ensure_ascii=False, indent=2))
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0 if report["status"] == "PREFLIGHT_PASSED" else 1
 
 if __name__ == "__main__":
