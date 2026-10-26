@@ -20,12 +20,8 @@ OUT = ROOT / "output" / "shorts-preflight.json"
 IST = ZoneInfo("Asia/Kolkata")
 URL = "https://akgsma.com/"
 
-def fetch_board() -> tuple[str, dict[str, float | None]]:
-    req = urllib.request.Request(URL, headers={"User-Agent": "Mozilla/5.0 Swarnam4U preflight"})
-    with urllib.request.urlopen(req, timeout=25) as response:
-        html = response.read().decode("utf-8", "replace")
-    text = re.sub(r"<[^>]+>", " ", html)
-    text = text.replace("&nbsp;", " ").replace("&#8377;", "₹").replace("&amp;", "&")
+def parse_board_text(text: str) -> tuple[str, dict[str, float | None]]:
+    """Parse normalized visible text from AKGSMA's current board page."""
     text = re.sub(r"\s+", " ", text)
     date_match = re.search(r"Today'?s Rate\s*\((\d{1,2})/(\d{1,2})/(\d{4})\)", text, re.I)
     if not date_match:
@@ -41,6 +37,14 @@ def fetch_board() -> tuple[str, dict[str, float | None]]:
         "silver_925_published": rate(r"925\s*Hall\s*Marked\s*Silver\s*\(\s*1\s*gm\s*\)\s*[-–:]?\s*(?:₹|Rs\.?)?\s*([\d,]+(?:\.\d+)?)"),
     }
     return board_date, rates
+
+def fetch_board() -> tuple[str, dict[str, float | None]]:
+    req = urllib.request.Request(URL, headers={"User-Agent": "Mozilla/5.0 Swarnam4U preflight"})
+    with urllib.request.urlopen(req, timeout=25) as response:
+        html = response.read().decode("utf-8", "replace")
+    text = re.sub(r"<[^>]+>", " ", html)
+    text = text.replace("&nbsp;", " ").replace("&#8377;", "₹").replace("&#39;", "'").replace("&amp;", "&")
+    return parse_board_text(text)
 
 def main() -> int:
     now = dt.datetime.now(IST)
