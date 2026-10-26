@@ -5,6 +5,7 @@ import argparse
 import asyncio
 import datetime as dt
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -192,7 +193,7 @@ async def main_async(slot: str) -> int:
     date, values = board_values()
     out_dir = OUT / f"{date.isoformat()}-{slot}"
     out_dir.mkdir(parents=True, exist_ok=True)
-    manifest = {"date": date.isoformat(), "slot": slot, "website": WEBSITE, "videos": [], "publish_enabled": False}
+    manifest = {"date": date.isoformat(), "slot": slot, "website": WEBSITE, "videos": [], "publish_enabled": os.environ.get("YOUTUBE_AUTO_PUBLISH", "").lower() == "true"}
     for lang in ("en", "ml"):
         stem = f"swarnam4u-{date.isoformat()}-{slot}-{lang}"
         png, mp3, mp4 = out_dir / f"{stem}.png", out_dir / f"{stem}.mp3", out_dir / f"{stem}.mp4"
