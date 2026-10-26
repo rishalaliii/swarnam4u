@@ -2,10 +2,6 @@ name: Swarnam4U Shorts Preflight
 
 on:
   workflow_dispatch:
-  schedule:
-    # 10:00, 13:00, 17:00 India time = 04:30, 07:30, 11:30 UTC.
-    # GitHub Actions schedules are UTC and may be delayed.
-    - cron: "30 4,7,11 * * *"
 
 permissions:
   contents: read
@@ -23,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate current rate snapshot
+      - name: Validate current live rates
         run: python scripts/shorts_preflight.py
       - name: Save preflight report
         if: always()
