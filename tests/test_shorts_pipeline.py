@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import Image
-from scripts import build_shorts
+from scripts import build_shorts, shorts_preflight
 
 
 class ShortsDesignTests(unittest.TestCase):
@@ -33,6 +33,25 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("swarnam4u.onrender.com", text)
         self.assertIn("₹10,705", text)
         self.assertIn("₹220", text)
+
+    def test_board_parser_reads_published_rates_and_refuses_na_925(self):
+        text = (
+            "Today's Rate (27/10/2026) "
+            "22K916 (1gm) - ₹ 13085 "
+            "18K750 (1gm) - ₹ 10705 "
+            "Silver (1gm) - ₹ 220 "
+            "925 Hall Marked Silver (1gm) - ₹ NA"
+        )
+        date, rates = shorts_preflight.parse_board_text(text)
+        self.assertEqual(date, "2026-10-27")
+        self.assertEqual(rates["gold_22k_916"], 13085)
+        self.assertEqual(rates["gold_18k_750"], 10705)
+        self.assertEqual(rates["silver_999"], 220)
+        self.assertIsNone(rates["silver_925_published"])
+
+    def test_parser_fails_if_board_date_is_missing(self):
+        with self.assertRaisesRegex(ValueError, "board date"):
+            shorts_preflight.parse_board_text("22K916 (1gm) - ₹ 13085")
 
     def test_both_rate_cards_are_vertical_1080_by_1920(self):
         with tempfile.TemporaryDirectory() as temp:
