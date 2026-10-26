@@ -115,7 +115,7 @@ def main() -> int:
         print(f"Expected manifest is missing: {manifest_path}", file=sys.stderr)
         return 2
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("publish_enabled") is not False or manifest.get("date") != today.isoformat() or manifest.get("slot") != slot:
+    if manifest.get("publish_enabled") is not True or manifest.get("date") != today.isoformat() or manifest.get("slot") != slot:
         print("Manifest/date/slot mismatch; upload refused.", file=sys.stderr)
         return 2
     videos = {row.get("language"): out_dir / row.get("video", "") for row in manifest.get("videos", [])}
