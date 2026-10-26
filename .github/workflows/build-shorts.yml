@@ -1,0 +1,64 @@
+name: Build Swarnam4U Shorts
+
+on:
+  schedule:
+    # Start rendering 15 minutes before the intended India-time publishing slots.
+    # GitHub Actions can be delayed; this workflow currently builds artifacts only.
+    - cron: "15 4 * * *"   # 09:45 IST -> morning slot
+    - cron: "15 7 * * *"   # 12:45 IST -> midday slot
+    - cron: "15 11 * * *"  # 16:45 IST -> evening slot
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "Which bilingual pair to render"
+        required: true
+        type: choice
+        options:
+          - morning
+          - midday
+          - evening
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swarnam4u-shorts-build
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install FFmpeg and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fontconfig fonts-noto-core fonts-dejavu-core
+      - name: Install Python packages
+        run: python -m pip install -r requirements-shorts.txt
+      - name: Validate live board date and saved rates
+        run: python scripts/shorts_preflight.py
+      - name: Build morning English + Malayalam
+        if: github.event_name == 'schedule' && github.event.schedule == '15 4 * * *'
+        run: python scripts/build_shorts.py --slot morning
+      - name: Build midday English + Malayalam
+        if: github.event_name == 'schedule' && github.event.schedule == '15 7 * * *'
+        run: python scripts/build_shorts.py --slot midday
+      - name: Build evening English + Malayalam
+        if: github.event_name == 'schedule' && github.event.schedule == '15 11 * * *'
+        run: python scripts/build_shorts.py --slot evening
+      - name: Build selected pair (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        run: python scripts/build_shorts.py --slot "${{ inputs.slot }}"
+      - name: Upload generated files for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swarnam4u-shorts-${{ github.run_id }}
+          path: output/
+          if-no-files-found: warn
+          retention-days: 7
