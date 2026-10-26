@@ -1,0 +1,31 @@
+name: Swarnam4U Shorts Preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swarnam4u-shorts-preflight
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate current live rates
+        run: python scripts/shorts_preflight.py
+      - name: Save preflight report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swarnam4u-shorts-preflight
+          path: output/shorts-preflight.json
+          if-no-files-found: warn
+          retention-days: 14

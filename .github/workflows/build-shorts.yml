@@ -1,0 +1,82 @@
+name: Build Swarnam4U Shorts
+
+on:
+  schedule:
+    # Start rendering 15 minutes before the intended India-time publishing slots.
+    # GitHub Actions can be delayed; automated YouTube publication is separately opt-in.
+    - cron: "15 4 * * *"   # 09:45 IST -> morning slot
+    - cron: "15 7 * * *"   # 12:45 IST -> midday slot
+    - cron: "15 11 * * *"  # 16:45 IST -> evening slot
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "Which bilingual pair to render"
+        required: true
+        type: choice
+        options:
+          - morning
+          - midday
+          - evening
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swarnam4u-shorts-build
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install FFmpeg and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fontconfig fonts-noto-core fonts-dejavu-core
+      - name: Install Python packages
+        run: python -m pip install -r requirements-shorts.txt
+      - name: Validate live board date and saved rates
+        run: python scripts/shorts_preflight.py
+      - name: Resolve the scheduled slot
+        id: slot
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT_SLOT: ${{ inputs.slot }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            SLOT="$INPUT_SLOT"
+          else
+            case "$SCHEDULE" in
+              "15 4 * * *") SLOT="morning" ;;
+              "15 7 * * *") SLOT="midday" ;;
+              "15 11 * * *") SLOT="evening" ;;
+              *) echo "Unknown schedule: $SCHEDULE" >&2; exit 2 ;;
+            esac
+          fi
+          echo "slot=$SLOT" >> "$GITHUB_OUTPUT"
+          echo "Building slot: $SLOT"
+      - name: Build English + Malayalam Shorts
+        env:
+          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_AUTO_PUBLISH }}
+        run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
+      - name: Publish to YouTube (explicit opt-in only)
+        if: vars.YOUTUBE_AUTO_PUBLISH == 'true'
+        env:
+          SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
+          YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: python scripts/upload_shorts.py
+      - name: Upload generated files and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swarnam4u-shorts-${{ github.run_id }}
+          path: output/
+          if-no-files-found: warn
+          retention-days: 7
