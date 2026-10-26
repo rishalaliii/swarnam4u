@@ -62,6 +62,8 @@ jobs:
           echo "slot=$SLOT" >> "$GITHUB_OUTPUT"
           echo "Building slot: $SLOT"
       - name: Build English + Malayalam Shorts
+        env:
+          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_AUTO_PUBLISH }}
         run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
       - name: Publish to YouTube (explicit opt-in only)
         if: vars.YOUTUBE_AUTO_PUBLISH == 'true'
