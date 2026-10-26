@@ -142,6 +142,10 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
     date_label = date.strftime("%d %B %Y")
     d.text((100, 407), date_label, font=find_font(lang, True, 42), fill="#F6EEDD")
+    slot_clock = {"morning": "10:00 IST", "midday": "13:00 IST", "evening": "17:00 IST"}[slot]
+    clock_font = find_font(lang, True, 38)
+    clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
+    d.text((980 - clock_width, 410), slot_clock, font=clock_font, fill="#D8BC83")
     y = 550
     for label, key in labels:
         d.rounded_rectangle((65, y, 1015, y + 260), radius=28, fill="#182330", outline="#354455", width=2)
