@@ -58,6 +58,10 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("#Shorts", description)
         self.assertNotIn("Website: https://swarnam4u.onrender.com", description)
 
+    def test_youtube_oauth_scopes_cover_upload_and_channel_checks(self):
+        self.assertIn("https://www.googleapis.com/auth/youtube.upload", upload_shorts.SCOPES)
+        self.assertIn("https://www.googleapis.com/auth/youtube.readonly", upload_shorts.SCOPES)
+
     def test_youtube_upload_refuses_wrong_channel(self):
         correct = {"id": "channel-123", "snippet": {"customUrl": "@SWARANAM4U"}}
         self.assertEqual(upload_shorts.verify_channel_identity(correct), "@swaranam4u")
