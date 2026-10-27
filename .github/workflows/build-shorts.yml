@@ -28,14 +28,15 @@ on:
           - morning
           - midday
           - evening
-      publish_now:
-        description: "For a manual run, also schedule the videos on YouTube (otherwise build files only)"
+      publish_mode:
+        description: "Build files, upload a private test pair, or schedule both videos for the chosen slot"
         required: true
         type: choice
         options:
-          - "false"
-          - "true"
-        default: "false"
+          - build_only
+          - private_test
+          - schedule
+        default: build_only
 
 permissions:
   contents: read
@@ -100,12 +101,13 @@ jobs:
           echo "Building slot: $SLOT"
       - name: Build English + Malayalam Shorts
         env:
-          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_AUTO_PUBLISH == 'true' && (github.event_name == 'schedule' || inputs.publish_now == 'true') }}
+          YOUTUBE_AUTO_PUBLISH: ${{ (github.event_name == 'schedule' && vars.YOUTUBE_AUTO_PUBLISH == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish_mode != 'build_only') }}
         run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
       - name: Publish to YouTube (explicit opt-in only)
-        if: vars.YOUTUBE_AUTO_PUBLISH == 'true' && (github.event_name == 'schedule' || inputs.publish_now == 'true')
+        if: (github.event_name == 'schedule' && vars.YOUTUBE_AUTO_PUBLISH == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish_mode != 'build_only')
         env:
           SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
+          SHORTS_UPLOAD_MODE: ${{ github.event_name == 'schedule' && 'schedule' || inputs.publish_mode || 'build_only' }}
           YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_EXPECTED_CHANNEL_HANDLE: ${{ vars.YOUTUBE_EXPECTED_CHANNEL_HANDLE || '@SWARANAM4U' }}
