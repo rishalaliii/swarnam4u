@@ -119,7 +119,7 @@ function viaRoutes(url,valid){
         if(valid&&!valid(x))throw new Error("not the rate page");     /* an error/captcha page from a relay must never win the race */
         S.diag[url]="ok via relay "+(i+1)+" in "+(Date.now()-t0)+" ms";return x})
       .catch(function(e){errs[i]=(e&&e.message)||"failed";throw e});
-  })).then(function(x){try{ctl.abort()}catch(e){}return x},function(e){S.diag[url]="FAILED: "+errs.map(function(m,i){return "relay "+(i+1)+" "+m}).join(", ");throw e});
+  })).then(function(x){try{ctl.abort()}catch(e){}return x},function(e){try{ctl.abort()}catch(ignore){}S.diag[url]="FAILED: "+errs.map(function(m,i){return "relay "+(i+1)+" "+m}).join(", ");throw e});
 }
 function isTodayIstDate(iso){
   return iso===new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
