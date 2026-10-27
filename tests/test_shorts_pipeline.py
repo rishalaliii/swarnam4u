@@ -236,6 +236,13 @@ class ShortsDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "board date"):
             shorts_preflight.parse_board_text("22K916 (1gm) - ₹ 13085")
 
+    def test_malayalam_rate_change_unit_has_no_foreign_script_glyphs(self):
+        source = Path(build_shorts.__file__).read_text(encoding="utf-8")
+        line = next(line for line in source.splitlines() if "change_value =" in line)
+        expected_unit = "/" + "ഗ്രാം"
+        self.assertIn(expected_unit, line)
+        self.assertNotRegex(line, "[\\u0A80-\\u0AFF]")
+
     def test_malayalam_font_and_raqm_are_required(self):
         self.assertTrue(features.check_feature("raqm"), "CI Pillow must include RAQM for Malayalam shaping")
         malayalam = build_shorts.find_font("ml", True, 32)
