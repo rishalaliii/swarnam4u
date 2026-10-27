@@ -250,11 +250,20 @@ def main():
         old = data[grp].get(label)
         if not old:
             yesterday = None
+            yesterday_date = None
         elif old.get("date") == rdate:
             yesterday = old.get("yesterday")
+            yesterday_date = old.get("yesterday_date")
         else:
             yesterday = old["today"]
-        data[grp][label] = {"today": val, "yesterday": yesterday, "date": rdate, "source": source}
+            yesterday_date = old.get("date")
+        data[grp][label] = {
+            "today": val,
+            "yesterday": yesterday,
+            "yesterday_date": yesterday_date,
+            "date": rdate,
+            "source": source,
+        }
         print("  %-16s %-10s %s (%s)" % (label, val, source, rdate))
     spot = spot_reference()
     if spot:

@@ -17,6 +17,11 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+try:
+    from rate_change_utils import video_title
+except ImportError:
+    from scripts.rate_change_utils import video_title
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
 IST = ZoneInfo("Asia/Kolkata")
@@ -71,10 +76,7 @@ def video_description(date: dt.date) -> str:
         "#Shorts #KeralaGoldRate #GoldRate #SilverRate #Swarnam4U"
     )
 
-def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime) -> dict:
-    language_title = "English" if lang == "en" else "Malayalam"
-    slot_title = {"morning": "Morning", "midday": "Midday", "evening": "Evening"}[slot]
-    title = f"Kerala Gold & Silver Rates | {date:%d %b %Y} | {slot_title} | {language_title} #Shorts"
+def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime, title: str) -> dict:
     description = video_description(date)
     body = {
         "snippet": {
@@ -127,17 +129,17 @@ def main() -> int:
     if set(videos) != {"en", "ml"} or any(not p.is_file() or p.stat().st_size < 20_000 for p in videos.values()):
         print("Both valid English and Malayalam MP4s are required.", file=sys.stderr)
         return 2
+    comparisons = manifest.get("comparisons", {})
+    primary_change = comparisons.get("22K · 916", {"direction": "unavailable", "change": None})
     youtube = get_youtube()
     existing_titles = recent_uploaded_titles(youtube)
     results = []
     for lang in ("en", "ml"):
-        language_title = "English" if lang == "en" else "Malayalam"
-        slot_title = {"morning": "Morning", "midday": "Midday", "evening": "Evening"}[slot]
-        title = f"Kerala Gold & Silver Rates | {today:%d %b %Y} | {slot_title} | {language_title} #Shorts"
+        title = video_title(lang, today, slot, primary_change)
         if title in existing_titles:
             results.append({"language": lang, "title": title, "status": "skipped_duplicate"})
             continue
-        results.append(upload_one(youtube, videos[lang], lang, today, slot, target))
+        results.append(upload_one(youtube, videos[lang], lang, today, slot, target, title))
     report = {"date": today.isoformat(), "slot": slot, "results": results}
     (out_dir / "upload-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
