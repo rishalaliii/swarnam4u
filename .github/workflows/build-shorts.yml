@@ -14,10 +14,10 @@ on:
       - ".github/workflows/build-shorts.yml"
   schedule:
     # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
-    # 10:10, 12:45 and 16:45 India time. GitHub Actions can be delayed.
+    # 10:10, 12:30 and 16:30 IST. Earlier midday/evening starts leave more room for delayed runners.
     - cron: "40 4 * * *"   # 10:10 IST -> morning slot
-    - cron: "15 7 * * *"   # 12:45 IST -> midday slot
-    - cron: "15 11 * * *"  # 16:45 IST -> evening slot
+    - cron: "0 7 * * *"    # 12:30 IST -> midday slot
+    - cron: "0 11 * * *"   # 16:30 IST -> evening slot
   workflow_dispatch:
     inputs:
       slot:
@@ -43,7 +43,8 @@ permissions:
 concurrency:
   # Serialize the same scheduled/manual slot, but never let a push-only artifact build
   # block a future scheduled publication if a runner stalls.
-  group: swarnam4u-shorts-build-${{ github.event.schedule || inputs.slot || github.run_id }}
+  # Map scheduled and manual runs to the same slot lock; push-only review builds keep a unique group.
+  group: swarnam4u-shorts-build-${{ inputs.slot || (github.event.schedule == '40 4 * * *' && 'morning') || (github.event.schedule == '0 7 * * *' && 'midday') || (github.event.schedule == '0 11 * * *' && 'evening') || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -90,8 +91,8 @@ jobs:
           else
             case "$SCHEDULE" in
               "40 4 * * *") SLOT="morning" ;;
-              "15 7 * * *") SLOT="midday" ;;
-              "15 11 * * *") SLOT="evening" ;;
+              "0 7 * * *") SLOT="midday" ;;
+              "0 11 * * *") SLOT="evening" ;;
               *) echo "Unknown schedule: $SCHEDULE" >&2; exit 2 ;;
             esac
           fi
@@ -107,6 +108,7 @@ jobs:
           SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
           YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_EXPECTED_CHANNEL_HANDLE: ${{ vars.YOUTUBE_EXPECTED_CHANNEL_HANDLE || '@SWARANAM4U' }}
         run: python scripts/upload_shorts.py
       - name: Upload generated files and report
         if: always()

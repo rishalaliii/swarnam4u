@@ -126,10 +126,16 @@ def video_description(date: dt.date) -> str:
     )
 
 def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime, title: str) -> dict:
+    if not title or len(title) > 100:
+        raise ValueError(f"YouTube title must be 1–100 characters; got {len(title)}.")
     description = video_description(date)
+    if len(description) > 5000:
+        raise ValueError(f"YouTube description exceeds 5,000 characters ({len(description)}).")
+    if publish_at.tzinfo is None:
+        raise ValueError("YouTube publish time must be timezone-aware.")
     body = {
         "snippet": {
-            "title": title[:100],
+            "title": title,
             "description": description[:5000],
             "tags": ["Shorts", "Kerala Gold Rate", "Gold Rate", "Silver Rate", "Swarnam4U"],
             "categoryId": "22",
@@ -142,9 +148,12 @@ def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str,
         },
     }
     media = MediaFileUpload(str(path), mimetype="video/mp4", resumable=True, chunksize=8 * 1024 * 1024)
-    response = youtube.videos().insert(part="snippet,status", body=body, media_body=media).execute()
-    return {"language": lang, "title": title, "video_id": response.get("id"),
-            "publish_at_ist": publish_at.isoformat(timespec="seconds"), "status": "scheduled_private"}
+    response = youtube.videos().insert(part="snippet,status", body=body, media_body=media).execute(num_retries=5)
+    video_id = response.get("id")
+    if not video_id:
+        raise RuntimeError("YouTube upload response did not include a video ID.")
+    return {"language": lang, "title": title, "video_id": video_id,
+            "publish_at_ist": publish_at.astimezone(IST).isoformat(timespec="seconds"), "status": "scheduled_private"}
 
 def main() -> int:
     slot = os.environ.get("SHORTS_SLOT", "")

@@ -16,7 +16,7 @@ This branch adds a first cloud-generated bilingual video stage. It does not chan
 - Checks generated dimensions and file size, then saves MP4, PNG, MP3, and a manifest as a workflow artifact for review.
 
 ## Target slots
-The cloud starts are scheduled for 10:10, 12:45 and 16:45 India time. The morning job is deliberately after AKGSMA publishes its board around 10:00; it refreshes the workflow's working copy from the live source before validating. The morning video is scheduled for 10:30 because current-day rates cannot be fetched and rendered before the board is published. Midday/evening target 13:00 and 17:00. GitHub Actions can be delayed; no exact-minute guarantee is possible.
+The cloud starts are scheduled for 10:10, 12:30 and 16:30 India time. The morning job is deliberately after AKGSMA publishes its board around 10:00; it refreshes the workflow's working copy from the live source before validating. The morning video is scheduled for 10:30 because current-day rates cannot be fetched and rendered before the board is published. Midday/evening target 13:00 and 17:00; the earlier starts leave more build/upload margin. GitHub Actions can be delayed; no exact-minute guarantee is possible.
 
 If all three runs succeed, that is six generated clips per day: three English and three Malayalam.
 

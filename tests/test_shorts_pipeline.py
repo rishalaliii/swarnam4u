@@ -197,6 +197,43 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertNotIn("•", source)
         self.assertNotIn("□", source)
 
+    def test_malayalam_narration_uses_native_malayalam_month_name(self):
+        text = build_shorts.script_text("ml", self.date, self.values, self.comparisons)
+        self.assertIn("27 ഒക്ടോബർ 2026 തീയതിയിലെ", text)
+        self.assertNotIn("October", text)
+
+    def test_rendered_video_metadata_requires_valid_video_and_audio(self):
+        valid = {
+            "streams": [
+                {
+                    "codec_type": "video", "codec_name": "h264",
+                    "width": 1080, "height": 1920, "pix_fmt": "yuv420p",
+                    "avg_frame_rate": "30/1", "r_frame_rate": "30/1",
+                },
+                {"codec_type": "audio", "codec_name": "aac", "sample_rate": "48000"},
+            ],
+            "format": {"duration": "41.42"},
+        }
+        self.assertAlmostEqual(build_shorts.validate_video_metadata(valid, "valid.mp4"), 41.42)
+        no_audio = {"streams": [valid["streams"][0]], "format": {"duration": "41.42"}}
+        with self.assertRaisesRegex(RuntimeError, "exactly one audio stream"):
+            build_shorts.validate_video_metadata(no_audio, "missing-audio.mp4")
+        wrong_dimensions = {
+            "streams": [
+                dict(valid["streams"][0], width=720),
+                valid["streams"][1],
+            ],
+            "format": {"duration": "41.42"},
+        }
+        with self.assertRaisesRegex(RuntimeError, "dimensions must be 1080x1920"):
+            build_shorts.validate_video_metadata(wrong_dimensions, "wrong-size.mp4")
+        short_duration = {
+            "streams": valid["streams"],
+            "format": {"duration": "2.0"},
+        }
+        with self.assertRaisesRegex(RuntimeError, "duration must be between 5 and 60"):
+            build_shorts.validate_video_metadata(short_duration, "too-short.mp4")
+
     def test_both_rate_cards_are_vertical_1080_by_1920(self):
         with tempfile.TemporaryDirectory() as temp:
             for language in ("en", "ml"):
