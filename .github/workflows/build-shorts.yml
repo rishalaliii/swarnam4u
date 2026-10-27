@@ -2,9 +2,9 @@ name: Build Swarnam4U Shorts
 
 on:
   schedule:
-    # Start rendering 15 minutes before the intended India-time publishing slots.
-    # GitHub Actions can be delayed; automated YouTube publication is separately opt-in.
-    - cron: "15 4 * * *"   # 09:45 IST -> morning slot
+    # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
+    # 10:10, 12:45 and 16:45 India time. GitHub Actions can be delayed.
+    - cron: "40 4 * * *"   # 10:10 IST -> morning slot
     - cron: "15 7 * * *"   # 12:45 IST -> midday slot
     - cron: "15 11 * * *"  # 16:45 IST -> evening slot
   workflow_dispatch:
@@ -40,6 +40,8 @@ jobs:
           sudo apt-get install -y ffmpeg fontconfig fonts-noto-core fonts-dejavu-core
       - name: Install Python packages
         run: python -m pip install -r requirements-shorts.txt
+      - name: Refresh working copy from live AKGSMA board
+        run: python scripts/fetch_rates.py
       - name: Validate live board date and saved rates
         run: python scripts/shorts_preflight.py
       - name: Resolve the scheduled slot
@@ -53,7 +55,7 @@ jobs:
             SLOT="$INPUT_SLOT"
           else
             case "$SCHEDULE" in
-              "15 4 * * *") SLOT="morning" ;;
+              "40 4 * * *") SLOT="morning" ;;
               "15 7 * * *") SLOT="midday" ;;
               "15 11 * * *") SLOT="evening" ;;
               *) echo "Unknown schedule: $SCHEDULE" >&2; exit 2 ;;

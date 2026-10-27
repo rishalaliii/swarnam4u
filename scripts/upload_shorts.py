@@ -21,7 +21,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
 IST = ZoneInfo("Asia/Kolkata")
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
-SLOT_TIMES = {"morning": (10, 0), "midday": (13, 0), "evening": (17, 0)}
+SLOT_TIMES = {"morning": (10, 30), "midday": (13, 0), "evening": (17, 0)}
 WEBSITE = "swarnam4u.onrender.com"
 
 def get_youtube():
