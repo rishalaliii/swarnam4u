@@ -30,6 +30,19 @@ Deploy `worker/rates-worker.js` (adds a `?api=rates` JSON endpoint that parses A
    printed values with akgsma.com. Adjust `PATTERNS` in the script if they differ.
 4. Confirm akgsma.com permits automated access. The fetcher checks `robots.txt` before requesting the primary AKGSMA page and uses fallback sources when needed.
 
+## YouTube Shorts automation for `@SWARANAM4U`
+
+The scheduled `Build Swarnam4U Shorts` workflow creates English and Malayalam 9:16 videos for the morning, midday and evening slots. It refreshes/validates the rate board first and attaches the generated MP4, audio, image and manifest as a downloadable artifact.
+
+- A manual run defaults to **build-only**. The `publish_now` input must be explicitly set to `true` to publish from a manual run.
+- Scheduled uploads remain disabled until the repository variable `YOUTUBE_AUTO_PUBLISH` is set to `true` and the two Actions secrets below are configured.
+- Required secrets: `YOUTUBE_CLIENT_SECRET_JSON` (the entire OAuth client JSON) and `YOUTUBE_REFRESH_TOKEN` (a refresh token issued for the channel-owner account).
+- The refresh token must be authorized with both `https://www.googleapis.com/auth/youtube.upload` and `https://www.googleapis.com/auth/youtube.readonly`: upload scope alone is not enough for the channel-identity and recent-upload checks.
+- Optional Actions variable: `YOUTUBE_EXPECTED_CHANNEL_HANDLE`; defaults to `@SWARANAM4U`.
+- Before enabling scheduled publishing, run Actions > **Verify YouTube connection**. That workflow checks the OAuth account, expected handle and upload-history access without uploading anything. The uploader also re-checks the handle before each upload and refuses a mismatch.
+
+Never commit the OAuth JSON or refresh token to the repository, and never send them in chat. Review at least one generated MP4 from an artifact before enabling scheduled publication.
+
 Scheduled workflows on public repos are paused after 60 days without repo activity; re-enable under Actions if that happens.
 Local preview: `python -m http.server 8000`.
 
