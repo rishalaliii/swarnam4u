@@ -30,7 +30,7 @@ The scheduled build only runs once the workflow is present on the default branch
 
 ## Current limitations
 - The uploader script is included, but it is disabled by default. Publishing happens only if the repository Actions variable `YOUTUBE_AUTO_PUBLISH` is explicitly set to `true` and both OAuth secrets are present.
-- No YouTube upload or scheduled publication has been tested yet. Files first go to GitHub workflow artifacts for review.
+- Every newly uploaded English or Malayalam Short uses the shared YouTube description template. It includes: “Check out the latest rates via https://swarnam4u.onrender.com”.
 - The current board date and saved published-rate values must pass preflight. When AKGSMA has not published today's board rates, generation stops; no stale rates are published.
 - The video displays only the board's published 22K/916, 18K/750 and silver 999 values. It does not show 925 silver because AKGSMA has been showing it as unavailable.
 - Calculated 24K/14K prices, platinum fallbacks, and estimated values are deliberately excluded from these Shorts.
