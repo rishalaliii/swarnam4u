@@ -9,7 +9,9 @@ on:
       - "scripts/build_shorts.py"
       - "scripts/upload_shorts.py"
       - "scripts/check_youtube_connection.py"
+      - "scripts/create_youtube_refresh_token.py"
       - "requirements-shorts.txt"
+      - "requirements-youtube-setup.txt"
       - "tests/test_shorts_pipeline.py"
       - ".github/workflows/build-shorts.yml"
       - ".github/workflows/shorts-checks.yml"
@@ -45,6 +47,6 @@ jobs:
           python -m pip install --force-reinstall --no-binary=Pillow "Pillow>=10.4,<13"
           python -c "from PIL import features; assert features.check_feature('raqm'), 'Pillow RAQM shaping is required for Malayalam'"
       - name: Compile Python
-        run: python -m py_compile scripts/shorts_preflight.py scripts/fetch_rates.py scripts/rate_change_utils.py scripts/build_shorts.py scripts/upload_shorts.py scripts/check_youtube_connection.py tests/test_shorts_pipeline.py
+        run: python -m py_compile scripts/shorts_preflight.py scripts/fetch_rates.py scripts/rate_change_utils.py scripts/build_shorts.py scripts/upload_shorts.py scripts/check_youtube_connection.py scripts/create_youtube_refresh_token.py tests/test_shorts_pipeline.py
       - name: Test card design and script content
         run: python -m unittest discover -s tests -p 'test_shorts_pipeline.py' -v
