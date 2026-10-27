@@ -31,9 +31,13 @@ jobs:
       - name: Install system fonts
         timeout-minutes: 8
         run: |
+          # GitHub-hosted Ubuntu runners can hang on azure.archive.ubuntu.com; use the standard archive mirror.
+          for file in /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+            if [[ -f "$file" ]]; then sudo sed -i "s/azure\\.archive\\.ubuntu\\.com/archive.ubuntu.com/g" "$file"; fi
+          done
           APT_OPTS="-o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10"
           timeout --kill-after=10s 90s sudo apt-get $APT_OPTS update -qq || echo "::warning::apt-get update stalled; retrying install with runner package indexes"
-          timeout --kill-after=10s 300s sudo apt-get $APT_OPTS install -y --no-install-recommends fontconfig fonts-noto-core fonts-noto-extra fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
+          timeout --kill-after=10s 300s sudo apt-get $APT_OPTS install -y --no-install-recommends fontconfig fonts-noto-core fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
       - name: Install Python packages with RAQM shaping support
         timeout-minutes: 8
         run: |
