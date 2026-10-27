@@ -104,6 +104,7 @@ jobs:
           # The manifest is upload-enabled only when this run explicitly requests publishing
           # or is a scheduled run with auto-publishing enabled, and the kill switch is off.
           YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && ((github.event_name == 'schedule' && vars.YOUTUBE_AUTO_PUBLISH == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.publish_mode == 'schedule_private' || inputs.publish_mode == 'public_now') && (inputs.publish_mode == 'public_now' || vars.YOUTUBE_AUTO_PUBLISH == 'true')) ) }}
+          SHORTS_PUBLISH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'public_now' && 'public_now' || 'scheduled_private' }}
         run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
       - name: Emergency stop — uploads disabled
         if: vars.YOUTUBE_UPLOAD_KILL_SWITCH == 'true'
