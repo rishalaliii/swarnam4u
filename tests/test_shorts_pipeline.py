@@ -58,6 +58,37 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("#Shorts", description)
         self.assertNotIn("Website: https://swarnam4u.onrender.com", description)
 
+    def test_youtube_oauth_scopes_cover_upload_and_channel_checks(self):
+        self.assertIn("https://www.googleapis.com/auth/youtube.upload", upload_shorts.SCOPES)
+        self.assertIn("https://www.googleapis.com/auth/youtube.readonly", upload_shorts.SCOPES)
+
+    def test_youtube_upload_refuses_wrong_channel(self):
+        correct = {"id": "channel-123", "snippet": {"customUrl": "@SWARANAM4U"}}
+        self.assertEqual(upload_shorts.verify_channel_identity(correct), "@swaranam4u")
+        self.assertEqual(
+            upload_shorts.verify_channel_identity(
+                {"id": "channel-123", "snippet": {"customUrl": "https://www.youtube.com/@SWARANAM4U"}}
+            ),
+            "@swaranam4u",
+        )
+        with self.assertRaisesRegex(RuntimeError, "upload refused"):
+            upload_shorts.verify_channel_identity(
+                {"id": "another-channel", "snippet": {"customUrl": "@someoneelse"}}
+            )
+        # A channel ID resolved from YouTube's forHandle lookup is authoritative even if customUrl is absent.
+        self.assertEqual(
+            upload_shorts.verify_channel_identity(
+                {"id": "channel-123", "snippet": {}}, "@SWARANAM4U", "channel-123"
+            ),
+            "@swaranam4u",
+        )
+        with self.assertRaisesRegex(RuntimeError, "does not match"):
+            upload_shorts.verify_channel_identity(
+                {"id": "another-channel", "snippet": {}}, "@SWARANAM4U", "channel-123"
+            )
+        with self.assertRaisesRegex(RuntimeError, "did not expose a verifiable handle"):
+            upload_shorts.verify_channel_identity({"id": "channel-123", "snippet": {}})
+
     def test_day_over_day_comparison_up_down_same_and_unavailable(self):
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["direction"], "up")
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["change"], 50)
@@ -130,6 +161,10 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertEqual(rates["gold_18k_750"], 10705)
         self.assertEqual(rates["silver_999"], 220)
         self.assertIsNone(rates["silver_925_published"])
+
+    def test_preflight_respects_source_robots_rules(self):
+        self.assertTrue(shorts_preflight.robots_allows("User-agent: *\nAllow: /\n"))
+        self.assertFalse(shorts_preflight.robots_allows("User-agent: *\nDisallow: /\n"))
 
     def test_parser_fails_if_board_date_is_missing(self):
         with self.assertRaisesRegex(ValueError, "board date"):

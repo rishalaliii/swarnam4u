@@ -1,0 +1,59 @@
+name: Website and poster checks
+
+on:
+  pull_request:
+    paths:
+      - "assets/**"
+      - "worker/**"
+      - "*.html"
+      - "data/*.json"
+      - "tests/poster.test.js"
+      - ".github/workflows/site-checks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "assets/**"
+      - "worker/**"
+      - "*.html"
+      - "data/*.json"
+      - "tests/poster.test.js"
+      - ".github/workflows/site-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check website JavaScript syntax
+        run: |
+          node --check assets/site.js
+          node --check assets/poster-core.js
+          node --check assets/poster.js
+          node --input-type=module --check < worker/rates-worker.js
+      - name: Run poster logic regression tests
+        run: node tests/poster.test.js
+      - name: Validate repository JSON files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          files = sorted(Path(".").rglob("*.json"))
+          for path in files:
+              if ".git" in path.parts:
+                  continue
+              with path.open(encoding="utf-8") as handle:
+                  json.load(handle)
+          print(f"Validated {len(files)} JSON files.")
+          PY

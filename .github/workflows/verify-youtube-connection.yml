@@ -1,0 +1,25 @@
+name: Verify YouTube connection
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install YouTube API client
+        run: python -m pip install "google-api-python-client>=2.160,<3" "google-auth>=2.38,<3" "google-auth-httplib2>=0.2,<1"
+      - name: Verify OAuth and expected channel without uploading
+        env:
+          YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_EXPECTED_CHANNEL_HANDLE: ${{ vars.YOUTUBE_EXPECTED_CHANNEL_HANDLE || '@SWARANAM4U' }}
+        run: python scripts/check_youtube_connection.py

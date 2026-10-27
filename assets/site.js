@@ -16,7 +16,13 @@ S.fmtDate=function(d,o){return new Date(d+"T00:00:00").toLocaleDateString("en-IN
 S.fmtStamp=function(iso){return new Date(iso).toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:"Asia/Kolkata"})+" IST"};
 S.hasRates=function(){var d=S.data;
   return !!(d&&d.updated&&!isNaN(new Date(d.updated))&&["gold","silver","platinum"].some(function(k){return d[k]&&Object.keys(d[k]).length}))};
-S.isStale=function(){return S.hasRates()&&(Date.now()-new Date(S.data.updated))>STALE_H*36e5};
+S.isStale=function(){
+   if(!S.hasRates())return false;
+   var today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+   var meta=META[S.metal]||META.gold,entry=(S.data[S.metal]||{})[meta.feat];
+   if(entry&&entry.date)return entry.date!==today;
+   return (Date.now()-new Date(S.data.updated))>STALE_H*36e5;
+ };
 /* change vs previous rate; null when no previous value is known */
 S.change=function(v){
   if(!v||v.yesterday==null||!v.yesterday)return null;
@@ -56,7 +62,7 @@ S.renderStamp=function(){
   else if(S.hasRates()&&S.liveFail&&!S.liveAt){box.dataset.s="stale";el.textContent="Live sources unreachable · showing last known rates from "+S.fmtStamp(S.data.updated)+" · tap Refresh"}
   else if(S.hasRates()){
     var st=S.isStale();box.dataset.s=st?"stale":"ok";
-    var base=S.data.live?"Live from AKGSMA · checked "+new Date(S.data.live).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit",second:"2-digit"}):(st?"Last verified ":"Updated ")+S.fmtStamp(S.data.updated)+" · "+(S.data.source||"AKGSMA Kerala")+(st?" · may be out of date":"");
+    var base=S.data.live?"Live rates checked "+new Date(S.data.live).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit",second:"2-digit"}):(st?"Last verified ":"Updated ")+S.fmtStamp(S.data.updated)+" · "+(S.data.source||"AKGSMA Kerala")+(st?" · may be out of date":"");
     el.textContent=base;
   }else if(S.error&&!S.data){box.dataset.s="none";el.textContent="Could not load rates. Retrying shortly."}
   else if(S.data){box.dataset.s="none";el.textContent=S.liveFail?"Live sources unreachable right now · tap Refresh to retry":"Rates unavailable · waiting for the first verified update"}
@@ -113,9 +119,27 @@ function viaRoutes(url,valid){
         if(valid&&!valid(x))throw new Error("not the rate page");     /* an error/captcha page from a relay must never win the race */
         S.diag[url]="ok via relay "+(i+1)+" in "+(Date.now()-t0)+" ms";return x})
       .catch(function(e){errs[i]=(e&&e.message)||"failed";throw e});
-  })).then(function(x){try{ctl.abort()}catch(e){}return x},function(e){S.diag[url]="FAILED: "+errs.map(function(m,i){return "relay "+(i+1)+" "+m}).join(", ");throw e});
+  })).then(function(x){try{ctl.abort()}catch(e){}return x},function(e){try{ctl.abort()}catch(ignore){}S.diag[url]="FAILED: "+errs.map(function(m,i){return "relay "+(i+1)+" "+m}).join(", ");throw e});
 }
-var okAK=function(x){return /22\s*K\s*916[\s\S]{0,40}1\s*gm/i.test(x)};
+function isTodayIstDate(iso){
+  return iso===new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+}
+function currentBoardDateFromAkgsma(text){
+  var m=/Today'?s Rate\s*\((\d{1,2})\/(\d{1,2})\/(\d{4})\)/i.exec(text);
+  if(!m)return null;
+  return m[3]+"-"+String(Number(m[2])).padStart(2,"0")+"-"+String(Number(m[1])).padStart(2,"0");
+}
+var okAK=function(x){
+  return currentBoardDateFromAkgsma(x)===new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"})
+    && /22\s*K\s*916[\s\S]{0,40}1\s*gm/i.test(x);
+};
+var okLiveGold=function(x){
+  var m=/\b\w+day,\s*(\d{1,2}) ([A-Z][a-z]+) (\d{4})\b/.exec(x);
+  if(!m)return false;
+  var months={January:"01",February:"02",March:"03",April:"04",May:"05",June:"06",July:"07",August:"08",September:"09",October:"10",November:"11",December:"12"};
+  var iso=m[3]+"-"+(months[m[2]]||"00")+"-"+String(Number(m[1])).padStart(2,"0");
+  return isTodayIstDate(iso)&&/AKGSMA/i.test(x)&&/22\s+Karat\s+Gold/i.test(x);
+};
 var okPage=function(x){return /(?:₹|Rs\.?)\s*\d/.test(x)};
 /* returns number of rates applied */
 S.ov={};S.liveAt=null;
@@ -128,7 +152,7 @@ var BACKUP={};
 S.metals=S.metals||["gold","silver","platinum"];
 function pruneBackup(){BACKUP={};S.metals.forEach(function(m){if(BACKUP0[m])BACKUP[m]=BACKUP0[m]})}
 function apply(text,only,src){
-  var n=0,today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"}),ak=/AKGSMA/.test(src);
+  var n=0,today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"}),ak=/^AKGSMA Kerala/i.test(src);
   (ak?AKPAT:PAT).forEach(function(p){
     if(only&&p[0]!==only)return;
     var o=S.data[p[0]][p[1]];
@@ -170,7 +194,7 @@ S.live=function(ready){
   /* fastest and most reliable: our own Worker fetches and parses server-side (see worker/README.md) */
   var api=!WORKER?Promise.resolve(0):timeout(6000,fetch(WORKER+"/?api=rates",{cache:"no-store"})).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
     return ready.then(function(){ensure();var n=0;
-      [["gold","g"],["silver","s"]].forEach(function(g){var o=j[g[0]]||{};Object.keys(o).forEach(function(k){var v=+o[k];if(!v)return;
+      [["gold","g"],["silver","s"]].forEach(function(g){if(j.date!==today)throw new Error("rate API board date does not match today in Kerala");var o=j[g[0]]||{};Object.keys(o).forEach(function(k){var v=+o[k];if(!v)return;
         var old=S.data[g[0]][k],y=!old?null:(old.date===today?old.yesterday:old.today);
         var e={today:v,yesterday:y,date:today,source:(j.source||"AKGSMA Kerala")+(/\*$/.test(k)?"":"")+" (live)"};
         if(j.calc&&j.calc.indexOf(k)>=0)e.source=(j.source||"AKGSMA Kerala")+" (calculated from 22K) (live)";
@@ -181,7 +205,7 @@ S.live=function(ready){
     /* backup pages are requested ONLY if AKGSMA did not already give this metal live today (saves ~30 requests per refresh) */
     return Promise.all([main,ready,api]).then(function(){
       if(fresh(m))return 0;
-      return Promise.all(BACKUP[m].map(function(b){return viaRoutes(b[1],okPage).then(function(t){return {t:t,n:b[0]}},function(){return null})}))
+      return Promise.all(BACKUP[m].map(function(b){var validator=/livegoldkerala\.com/i.test(b[1])?okLiveGold:okPage;return viaRoutes(b[1],validator).then(function(t){return {t:t,n:b[0]}},function(){return null})}))
         .then(function(rs){var tot=0;for(var i=0;i<rs.length;i++){if(rs[i]&&!fresh(m))tot+=apply(rs[i].t,m,rs[i].n+" (live)")}return tot})
     }).catch(function(){return 0});
   });
@@ -214,21 +238,21 @@ S.load=function(){
 };
 /* One live fetch parses gold, silver AND platinum together, so switching tabs never waits on the network. */
 S.refresh=function(force){
-  var gap=force?0:15000;
+  var gap=force?0:LIVE_MS;
   if(S.busy||(S.lastLive&&Date.now()-S.lastLive<gap))return Promise.resolve();
   S.busy=true;S.renderStamp();
   var fileP=S.load();                                       /* file and live run in parallel */
   var liveP=S.live(fileP).then(function(n){if(n){save();S.subs.forEach(function(f){f()})}return n});
-  return Promise.all([fileP,liveP]).then(function(){S.lastLive=Date.now();S.busy=false;S.renderStamp();S.renderDiag()});
+  return Promise.all([fileP,liveP]).then(function(){S.lastLive=Date.now();S.busy=false;S.renderStamp();S.renderDiag()},function(){S.liveFail=true;S.lastLive=Date.now();S.busy=false;S.renderStamp();S.renderDiag();return 0});
 };
 /* switching metal: show it instantly from memory, and quietly re-check in the background */
-S.tab=function(){S.refresh(false)};
+S.tab=function(){S.refresh(true)};
 
 S.start=function(cb){S.subs.push(cb);
   /* open: paint the last real rates this browser saved (never invented) so the page is never blank, and fetch the latest at the same instant */
   try{var k=localStorage.getItem("s4u-cache");if(k&&!S.data){var c=JSON.parse(k);if(c&&c.updated){S.data=c;delete S.data.live;S.renderStamp();cb()}}}catch(e){}
   S.refresh(true);                                           /* file + live check start immediately */
-  setInterval(function(){if(!document.hidden)S.refresh(false)},20000);
+  setInterval(function(){if(!document.hidden)S.refresh(false)},REFRESH_MS);
   document.addEventListener("visibilitychange",function(){if(!document.hidden)S.refresh(false)});
   window.addEventListener("online",function(){S.refresh(true)});
   /* IST midnight: new date -> fetch fresh rates and redraw everything (poster date/design, trends range) without a reload */

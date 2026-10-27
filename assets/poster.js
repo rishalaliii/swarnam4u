@@ -68,10 +68,24 @@ function blob(){return render().then(function(ok){if(!ok)throw new Error("poster
 function fname(){return "asian-jewellery-rates-"+C.dateLabel(new Date()).replace(/ /g,"-").toLowerCase()+".png"}
 function download(b){var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname();document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},4000)}
 function guard(fn){return function(){if(busy)return;busy=true;fn().catch(function(e){status("Could not create the poster: "+e.message,"err")}).then(function(){busy=false})}}
-function share(){return blob().then(function(b){var f=new File([b],fname(),{type:"image/png"}),t=C.summary(poster,"Asian Jewellery");
-  if(navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],text:t}).then(function(){status("Shared. In WhatsApp choose Status to publish it.","ok")},function(e){if(e&&e.name!=="AbortError")throw e;status("Sharing cancelled.","")});
-  download(b);status("Your poster is downloaded. This browser cannot send images directly – open WhatsApp, tap Status, and choose the downloaded image.","warn");
-  window.open(C.waLink(PHONE,t),"_blank","noopener")})}
+function share(){
+  var canShareFiles=false,waWindow=null;
+  try{var probe=new File([""],fname(),{type:"image/png"});canShareFiles=!!(navigator.canShare&&navigator.canShare({files:[probe]}))}catch(e){}
+  /* Open a fallback tab synchronously from the click so popup blockers do not discard the later async navigation. */
+  if(!canShareFiles){waWindow=window.open("about:blank","_blank");if(waWindow)waWindow.opener=null}
+  return blob().then(function(b){var f=new File([b],fname(),{type:"image/png"}),t=C.summary(poster,"Asian Jewellery");
+    if(navigator.canShare&&navigator.canShare({files:[f]})){
+      if(waWindow)waWindow.close();
+      return navigator.share({files:[f],text:t}).then(function(){status("Shared. In WhatsApp choose Status to publish it.","ok")},function(e){
+        if(e&&e.name==="AbortError"){status("Sharing cancelled.","");return}
+        download(b);status("The poster was downloaded. Open WhatsApp and attach it to Status.","warn")
+      })
+    }
+    download(b);
+    if(waWindow){status("Poster downloaded. WhatsApp opened with the rate summary; attach the PNG to Status manually.","warn");waWindow.location.href=C.waLink(PHONE,t)}
+    else status("Poster downloaded. Open WhatsApp, tap Status, and attach the downloaded image.","warn");
+  })
+}
 function copy(){var t=C.summary(poster,"Asian Jewellery");return (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){status("Rate summary copied.","ok")},function(){status("Copy is not available here – long-press the text instead.","warn")})}
 function j(u){return fetch(u,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(){return null})}
 /* start immediately: templates + today's poster image download while rates are still being fetched */

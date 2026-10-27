@@ -12,6 +12,8 @@ import pathlib
 import re
 import sys
 import urllib.request
+import urllib.error
+import urllib.robotparser
 from zoneinfo import ZoneInfo
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -19,6 +21,7 @@ RATES_PATH = ROOT / "data" / "rates.json"
 OUT = ROOT / "output" / "shorts-preflight.json"
 IST = ZoneInfo("Asia/Kolkata")
 URL = "https://akgsma.com/"
+UA = "Swarnam4U-rate-bot (+mailto:swarnam4u@gmail.com)"
 
 def parse_board_text(text: str) -> tuple[str, dict[str, float | None]]:
     """Parse normalized visible text from AKGSMA's current board page."""
@@ -38,8 +41,29 @@ def parse_board_text(text: str) -> tuple[str, dict[str, float | None]]:
     }
     return board_date, rates
 
+def robots_allows(robots_text: str, url: str = URL + "/") -> bool:
+    parser = urllib.robotparser.RobotFileParser()
+    parser.set_url(URL + "/robots.txt")
+    parser.parse(robots_text.splitlines())
+    return parser.can_fetch(UA, url)
+
+def ensure_primary_source_allowed() -> None:
+    req = urllib.request.Request(URL + "/robots.txt", headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            robots_text = response.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return  # No robots.txt means there is no published robots policy.
+        raise ValueError(f"Could not verify AKGSMA robots.txt (HTTP {exc.code}); preflight will not fetch the board.") from exc
+    except Exception as exc:
+        raise ValueError(f"Could not verify AKGSMA robots.txt; preflight will not fetch the board: {exc}") from exc
+    if not robots_allows(robots_text):
+        raise ValueError("AKGSMA robots.txt disallows this user-agent; preflight will not fetch the board.")
+
 def fetch_board() -> tuple[str, dict[str, float | None]]:
-    req = urllib.request.Request(URL, headers={"User-Agent": "Mozilla/5.0 Swarnam4U preflight"})
+    ensure_primary_source_allowed()
+    req = urllib.request.Request(URL, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=25) as response:
         html = response.read().decode("utf-8", "replace")
     text = re.sub(r"<[^>]+>", " ", html)
@@ -56,7 +80,7 @@ def main() -> int:
         "reason": None,
         "board_date": None,
         "rates": {},
-        "note": "Preflight only. No video rendered and no YouTube upload attempted."
+        "note": "This step validates current board rates only. Rendering follows separately; YouTube uploading remains separately gated."
     }
     try:
         if not RATES_PATH.exists():
@@ -90,8 +114,8 @@ def main() -> int:
         if saved_date != board_date:
             raise ValueError(f"Stored snapshot timestamp date is {saved_date or 'missing'}, but live board date is {board_date}.")
         report["status"] = "PREFLIGHT_PASSED"
-        report["reason"] = "Current board date and saved published rates match the live board. Render/upload remain disabled in this starter."
-        print("PREFLIGHT PASSED — live date and stored prices verified; rendering and uploads remain disabled.")
+        report["reason"] = "Current board date and saved published rates match the live board."
+        print("PREFLIGHT PASSED — live board date and saved published rates match.")
     except Exception as exc:
         report["reason"] = str(exc)
         print(f"PREFLIGHT BLOCKED: {exc}", file=sys.stderr)
