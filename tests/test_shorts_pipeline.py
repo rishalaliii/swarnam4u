@@ -3,6 +3,7 @@ import tempfile
 import unittest
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import Image, features
@@ -52,7 +53,8 @@ class ShortsDesignTests(unittest.TestCase):
 
     def test_every_youtube_description_has_latest_rates_call_to_action(self):
         description = upload_shorts.video_description(self.date)
-        self.assertIn("Check out the latest rates via https://swarnam4u.onrender.com", description)
+        self.assertIn("Check the latest rates: https://swarnam4u.onrender.com", description)
+        self.assertIn("Subscribe for daily Kerala gold-rate updates: https://www.youtube.com/@SWARANAM4U", description)
         self.assertIn("Source: AKGSMA Kerala", description)
         self.assertIn("27 October 2026", description)
         self.assertIn("#Shorts", description)
@@ -105,6 +107,56 @@ class ShortsDesignTests(unittest.TestCase):
             )
         with self.assertRaisesRegex(ValueError, "timezone information"):
             upload_shorts.ensure_publish_window(target, now=dt.datetime(2026, 10, 27, 16, 50))
+
+    def test_malayalam_youtube_description_is_localized_and_links_to_channel(self):
+        description = upload_shorts.video_description(self.date, "ml")
+        self.assertIn("27 ഒക്ടോബർ 2026", description)
+        self.assertIn("AKGSMA Kerala", description)
+        self.assertIn("https://swarnam4u.onrender.com", description)
+        self.assertIn("https://www.youtube.com/@SWARANAM4U", description)
+        self.assertIn("Subscribe", description)
+        self.assertIn("#Shorts", description)
+
+    def test_private_test_title_is_marked_and_keeps_hashtags_within_limit(self):
+        comparison = rate_change_utils.compare_rate(13135, 13085)
+        for lang in ("en", "ml"):
+            title = rate_change_utils.video_title(lang, self.date, "evening", comparison)
+            test_title = upload_shorts.private_test_title(title)
+            self.assertIn("[PRIVATE TEST]", test_title)
+            self.assertTrue(test_title.endswith("#KeralaGoldRate #Shorts"))
+            self.assertLessEqual(len(test_title), 100)
+
+    def test_private_test_payload_stays_private_and_has_no_publish_time(self):
+        comparison = rate_change_utils.compare_rate(13135, 13085)
+        title = upload_shorts.private_test_title(rate_change_utils.video_title("ml", self.date, "evening", comparison))
+        body = upload_shorts.video_resource("ml", self.date, title, "private_test")
+        self.assertEqual(body["snippet"]["defaultLanguage"], "ml")
+        self.assertEqual(body["status"]["privacyStatus"], "private")
+        self.assertNotIn("publishAt", body["status"])
+        self.assertIn("സ്വകാര്യ പരിശോധനാ വീഡിയോ", body["snippet"]["description"])
+        self.assertIn("[PRIVATE TEST]", body["snippet"]["title"])
+
+    def test_scheduled_payload_is_private_until_explicit_ist_publish_time(self):
+        title = rate_change_utils.video_title("en", self.date, "evening", rate_change_utils.compare_rate(13135, 13085))
+        target = dt.datetime(2026, 10, 27, 17, 0, tzinfo=ZoneInfo("Asia/Kolkata"))
+        body = upload_shorts.video_resource("en", self.date, title, "schedule", target)
+        self.assertEqual(body["status"]["privacyStatus"], "private")
+        self.assertEqual(body["status"]["publishAt"], "2026-10-27T11:30:00Z")
+        self.assertNotEqual(body["status"]["privacyStatus"], "public")
+
+    def test_private_test_does_not_block_production_slot(self):
+        comparison = rate_change_utils.compare_rate(13135, 13085)
+        normal_title = rate_change_utils.video_title("ml", self.date, "evening", comparison)
+        private_title = upload_shorts.private_test_title(normal_title)
+        changed_test_title = upload_shorts.private_test_title(normal_title.replace("₹50", "₹100"))
+        self.assertTrue(upload_shorts.is_duplicate_slot({private_title}, changed_test_title))
+        self.assertFalse(upload_shorts.is_duplicate_slot({private_title}, normal_title))
+
+    def test_channel_url_normalization(self):
+        self.assertEqual(
+            upload_shorts.normalize_channel_handle("https://www.youtube.com/@SWARANAM4U"),
+            "swarnam4u",
+        )
 
     def test_upload_dedupes_slot_even_if_rate_change_title_changes(self):
         old_title = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | വൈകിട്ട് 17:00 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
