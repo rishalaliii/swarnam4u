@@ -31,8 +31,9 @@ jobs:
       - name: Install system fonts
         timeout-minutes: 8
         run: |
-          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
-          sudo apt-get install -y --no-install-recommends fontconfig fonts-noto-core fonts-noto-extra fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
+          APT_OPTS="-o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10"
+          timeout --kill-after=10s 90s sudo apt-get $APT_OPTS update -qq || echo "::warning::apt-get update stalled; retrying install with runner package indexes"
+          timeout --kill-after=10s 300s sudo apt-get $APT_OPTS install -y --no-install-recommends fontconfig fonts-noto-core fonts-noto-extra fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
       - name: Install Python packages with RAQM shaping support
         timeout-minutes: 8
         run: |
