@@ -1,32 +1,32 @@
 {
-  "updated": "2026-10-27T07:50:54+05:30",
+  "updated": "2026-10-27T10:50:57+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
   "unit": "gram",
   "gold": {
     "22K · 916": {
-      "today": 13085,
-      "yesterday": 12973,
-      "date": "2026-10-26",
+      "today": 13135,
+      "yesterday": 13085,
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala"
     },
     "18K · 750": {
-      "today": 10705,
-      "yesterday": 10622,
-      "date": "2026-10-26",
+      "today": 10750,
+      "yesterday": 10705,
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala"
     },
     "24K · 999": {
-      "today": 14275,
-      "yesterday": 14152,
-      "date": "2026-10-26",
+      "today": 14329,
+      "yesterday": 14275,
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala (calculated from 22K)"
     },
     "14K · 585": {
-      "today": 8357,
-      "yesterday": 8285,
-      "date": "2026-10-26",
+      "today": 8389,
+      "yesterday": 8357,
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala (calculated from 22K)"
     }
   },
@@ -34,25 +34,25 @@
     "Silver · 999": {
       "today": 220.0,
       "yesterday": 220.0,
-      "date": "2026-10-26",
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala"
     },
     "Silver · 925": {
       "today": 203.5,
       "yesterday": 203.5,
-      "date": "2026-10-26",
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala (calculated from 999)"
     },
     "Silver · 800": {
       "today": 176.0,
       "yesterday": 176.0,
-      "date": "2026-10-26",
+      "date": "2026-10-27",
       "source": "AKGSMA Kerala (calculated from 999)"
     }
   },
   "platinum": {
     "Platinum · 950": {
-      "today": 4723.0,
+      "today": 4624.0,
       "yesterday": 4723.0,
       "date": "2026-10-27",
       "source": "Goodreturns Kerala"
@@ -127,7 +127,7 @@
       },
       {
         "date": "2026-10-27",
-        "rate": 13086.0
+        "rate": 13135.0
       }
     ],
     "silver": [
@@ -153,6 +153,10 @@
       },
       {
         "date": "2026-10-26",
+        "rate": 203.5
+      },
+      {
+        "date": "2026-10-27",
         "rate": 203.5
       }
     ],
@@ -183,7 +187,7 @@
       },
       {
         "date": "2026-10-27",
-        "rate": 4723.0
+        "rate": 4624.0
       }
     ]
   },
@@ -256,7 +260,7 @@
         },
         {
           "date": "2026-10-27",
-          "rate": 13086.0
+          "rate": 13135.0
         }
       ]
     },
@@ -328,7 +332,7 @@
         },
         {
           "date": "2026-10-27",
-          "rate": 14276.0
+          "rate": 14329.0
         }
       ]
     },
@@ -361,6 +365,10 @@
         {
           "date": "2026-10-26",
           "rate": 220.0
+        },
+        {
+          "date": "2026-10-27",
+          "rate": 220.0
         }
       ]
     },
@@ -392,6 +400,10 @@
         },
         {
           "date": "2026-10-26",
+          "rate": 203.5
+        },
+        {
+          "date": "2026-10-27",
           "rate": 203.5
         }
       ]
