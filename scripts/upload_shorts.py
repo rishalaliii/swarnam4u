@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Optional YouTube uploader. It is only called when YOUTUBE_AUTO_PUBLISH=true.
+"""Optional YouTube uploader for scheduled-private or explicitly requested public uploads.
 
-The workflow is deliberately disabled unless the repository variable is opted in.
+The workflow controls normal publishing; this script independently enforces the emergency stop.
 Uses a refresh token and OAuth client JSON stored in GitHub Actions Secrets.
 """
 from __future__ import annotations
@@ -164,14 +164,20 @@ def video_description(date: dt.date) -> str:
         "#Shorts #KeralaGoldRate #GoldRate #SilverRate #Swarnam4U"
     )
 
-def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime, title: str) -> dict:
+def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime | None, title: str, publish_mode: str) -> dict:
     if not title or len(title) > 100:
         raise ValueError(f"YouTube title must be 1–100 characters; got {len(title)}.")
     description = video_description(date)
     if len(description) > 5000:
         raise ValueError(f"YouTube description exceeds 5,000 characters ({len(description)}).")
-    if publish_at.tzinfo is None:
-        raise ValueError("YouTube publish time must be timezone-aware.")
+    if publish_mode == "scheduled_private" and (publish_at is None or publish_at.tzinfo is None):
+        raise ValueError("Scheduled YouTube publish time must be timezone-aware.")
+    status = {
+        "privacyStatus": "public" if publish_mode == "public_now" else "private",
+        "selfDeclaredMadeForKids": False,
+    }
+    if publish_mode == "scheduled_private":
+        status["publishAt"] = publish_at.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     body = {
         "snippet": {
             "title": title,
@@ -180,21 +186,29 @@ def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str,
             "categoryId": "22",
             "defaultLanguage": "en" if lang == "en" else "ml",
         },
-        "status": {
-            "privacyStatus": "private",
-            "publishAt": publish_at.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "selfDeclaredMadeForKids": False,
-        },
+        "status": status,
     }
     media = MediaFileUpload(str(path), mimetype="video/mp4", resumable=True, chunksize=8 * 1024 * 1024)
     response = youtube.videos().insert(part="snippet,status", body=body, media_body=media).execute(num_retries=5)
     video_id = response.get("id")
     if not video_id:
         raise RuntimeError("YouTube upload response did not include a video ID.")
-    return {"language": lang, "title": title, "video_id": video_id,
-            "publish_at_ist": publish_at.astimezone(IST).isoformat(timespec="seconds"), "status": "scheduled_private"}
+    result = {"language": lang, "title": title, "video_id": video_id,
+              "status": "published_public" if publish_mode == "public_now" else "scheduled_private"}
+    if publish_at is not None:
+        result["publish_at_ist"] = publish_at.astimezone(IST).isoformat(timespec="seconds")
+    return result
 
 def main() -> int:
+    # Fail closed independently of workflow conditions: generation can still finish, but this
+    # uploader must never send a request while the emergency stop is enabled.
+    if os.environ.get("YOUTUBE_UPLOAD_KILL_SWITCH", "false").strip().lower() == "true":
+        print("Emergency stop is ON; refusing every YouTube upload.", file=sys.stderr)
+        return 2
+    publish_mode = os.environ.get("SHORTS_PUBLISH_MODE", "scheduled_private").strip().lower()
+    if publish_mode not in {"scheduled_private", "public_now"}:
+        print("SHORTS_PUBLISH_MODE must be scheduled_private or public_now.", file=sys.stderr)
+        return 2
     slot = os.environ.get("SHORTS_SLOT", "")
     if slot not in SLOT_TIMES:
         print("SHORTS_SLOT must be morning, midday, or evening.", file=sys.stderr)
@@ -209,12 +223,13 @@ def main() -> int:
     if preflight.get("status") != "PREFLIGHT_PASSED" or preflight.get("current_date_ist") != today.isoformat():
         print("Preflight has not passed for today; upload refused.", file=sys.stderr)
         return 2
-    target = target_time(slot)
-    try:
-        ensure_publish_window(target)
-    except RuntimeError as exc:
-        print(str(exc), file=sys.stderr)
-        return 2
+    target = target_time(slot) if publish_mode == "scheduled_private" else None
+    if target is not None:
+        try:
+            ensure_publish_window(target)
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
     manifest_path = out_dir / "manifest.json"
     if not manifest_path.exists():
         print(f"Expected manifest is missing: {manifest_path}", file=sys.stderr)
@@ -237,17 +252,21 @@ def main() -> int:
         if is_duplicate_slot(existing_titles, title):
             results.append({"language": lang, "title": title, "status": "skipped_duplicate"})
             continue
-        # Recheck immediately before each upload: the first transfer or an API retry can take time.
-        try:
-            ensure_publish_window(target)
-        except RuntimeError as exc:
-            report = {"date": today.isoformat(), "slot": slot, "channel_handle": channel_handle, "results": results,
-                      "blocked_language": lang, "reason": str(exc)}
-            (out_dir / "upload-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-            print(json.dumps(report, ensure_ascii=False, indent=2), file=sys.stderr)
-            return 2
-        results.append(upload_one(youtube, videos[lang], lang, date=today, slot=slot, publish_at=target, title=title))
-    report = {"date": today.isoformat(), "slot": slot, "channel_handle": channel_handle, "results": results}
+        # Scheduled uploads recheck the target immediately before each upload. Public-now
+        # uploads intentionally bypass the schedule window because the user explicitly requested it.
+        if target is not None:
+            try:
+                ensure_publish_window(target)
+            except RuntimeError as exc:
+                report = {"date": today.isoformat(), "slot": slot, "channel_handle": channel_handle, "results": results,
+                          "blocked_language": lang, "reason": str(exc)}
+                (out_dir / "upload-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+                print(json.dumps(report, ensure_ascii=False, indent=2), file=sys.stderr)
+                return 2
+        results.append(upload_one(youtube, videos[lang], lang, date=today, slot=slot,
+                                  publish_at=target, title=title, publish_mode=publish_mode))
+    report = {"date": today.isoformat(), "slot": slot, "publish_mode": publish_mode,
+              "channel_handle": channel_handle, "results": results}
     (out_dir / "upload-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
