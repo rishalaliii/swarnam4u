@@ -58,6 +58,22 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("#Shorts", description)
         self.assertNotIn("Website: https://swarnam4u.onrender.com", description)
 
+    def test_youtube_upload_refuses_wrong_channel(self):
+        correct = {"id": "channel-123", "snippet": {"customUrl": "@SWARANAM4U"}}
+        self.assertEqual(upload_shorts.verify_channel_identity(correct), "@swaranam4u")
+        self.assertEqual(
+            upload_shorts.verify_channel_identity(
+                {"id": "channel-123", "snippet": {"customUrl": "https://www.youtube.com/@SWARANAM4U"}}
+            ),
+            "@swaranam4u",
+        )
+        with self.assertRaisesRegex(RuntimeError, "upload refused"):
+            upload_shorts.verify_channel_identity(
+                {"id": "another-channel", "snippet": {"customUrl": "@someoneelse"}}
+            )
+        with self.assertRaisesRegex(RuntimeError, "did not expose a handle"):
+            upload_shorts.verify_channel_identity({"id": "channel-123", "snippet": {}})
+
     def test_day_over_day_comparison_up_down_same_and_unavailable(self):
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["direction"], "up")
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["change"], 50)
