@@ -75,7 +75,7 @@ class ShortsDesignTests(unittest.TestCase):
             upload_shorts.verify_channel_identity(
                 {"id": "another-channel", "snippet": {"customUrl": "@someoneelse"}}
             )
-        with self.assertRaisesRegex(RuntimeError, "did not expose a handle"):
+        with self.assertRaisesRegex(RuntimeError, "did not expose a verifiable handle"):
             upload_shorts.verify_channel_identity({"id": "channel-123", "snippet": {}})
 
     def test_day_over_day_comparison_up_down_same_and_unavailable(self):
