@@ -11,6 +11,11 @@ on:
       - "scripts/check_youtube_connection.py"
       - "requirements-shorts.txt"
       - "tests/test_shorts_pipeline.py"
+      - "tests/poster.test.js"
+      - "assets/poster-core.js"
+      - "assets/posters/**"
+      - "data/poster-templates.json"
+      - "data/rates.json"
       - ".github/workflows/build-shorts.yml"
       - ".github/workflows/shorts-checks.yml"
       - ".github/workflows/verify-youtube-connection.yml"
@@ -48,3 +53,8 @@ jobs:
         run: python -m py_compile scripts/shorts_preflight.py scripts/fetch_rates.py scripts/rate_change_utils.py scripts/build_shorts.py scripts/upload_shorts.py scripts/check_youtube_connection.py tests/test_shorts_pipeline.py
       - name: Test card design and script content
         run: python -m unittest discover -s tests -p 'test_shorts_pipeline.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test daily poster data, layout and WhatsApp share logic
+        run: node tests/poster.test.js
