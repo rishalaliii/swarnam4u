@@ -147,6 +147,10 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertEqual(rates["silver_999"], 220)
         self.assertIsNone(rates["silver_925_published"])
 
+    def test_preflight_respects_source_robots_rules(self):
+        self.assertTrue(shorts_preflight.robots_allows("User-agent: *\nAllow: /\n"))
+        self.assertFalse(shorts_preflight.robots_allows("User-agent: *\nDisallow: /\n"))
+
     def test_parser_fails_if_board_date_is_missing(self):
         with self.assertRaisesRegex(ValueError, "board date"):
             shorts_preflight.parse_board_text("22K916 (1gm) - ₹ 13085")
