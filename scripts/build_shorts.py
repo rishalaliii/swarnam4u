@@ -13,7 +13,7 @@ import sys
 import textwrap
 from zoneinfo import ZoneInfo
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, features
 import edge_tts
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -29,12 +29,36 @@ def checked_run(args: list[str]) -> str:
     return p.stdout.strip()
 
 def find_font(language: str, bold: bool = False, size: int = 48) -> ImageFont.FreeTypeFont:
-    family = "Noto Sans Malayalam" if language == "ml" else ("DejaVu Sans:style=Bold" if bold else "DejaVu Sans")
-    path = checked_run(["fc-match", "-f", "%{file}", family])
-    if not path or not pathlib.Path(path).exists():
-        fallback = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-        path = fallback
-    return ImageFont.truetype(path, size=size)
+    """Load a verified script-specific font; never silently substitute a font without Malayalam glyphs."""
+    if language == "ml":
+        if not features.check_feature("raqm"):
+            raise RuntimeError(
+                "Pillow was built without RAQM text shaping. Install libraqm/harfbuzz/fribidi and rebuild Pillow."
+            )
+        style = "SemiBold" if bold else "Regular"
+        query = f"Noto Sans Malayalam:style={style}"
+        match = checked_run(["fc-match", "-f", "%{file}|%{family}", query])
+        parts = match.split("|", 1)
+        if len(parts) != 2:
+            raise RuntimeError("Could not resolve a Malayalam font through fontconfig.")
+        path, matched_family = parts[0].strip(), parts[1].strip()
+        if "malayalam" not in matched_family.lower():
+            raise RuntimeError(
+                f"Malayalam font was not installed correctly (fontconfig matched {matched_family!r})."
+            )
+        if not pathlib.Path(path).is_file():
+            raise RuntimeError(f"Resolved Malayalam font file does not exist: {path}")
+        return ImageFont.truetype(path, size=size, layout_engine=ImageFont.Layout.RAQM)
+
+    query = "DejaVu Sans:style=Bold" if bold else "DejaVu Sans:style=Book"
+    match = checked_run(["fc-match", "-f", "%{file}|%{family}", query])
+    parts = match.split("|", 1)
+    if len(parts) != 2 or "dejavu sans" not in parts[1].lower():
+        raise RuntimeError("DejaVu Sans Latin font is missing; refusing to render brand/domain text with a fallback.")
+    path = parts[0].strip()
+    if not pathlib.Path(path).is_file():
+        raise RuntimeError(f"Resolved Latin font file does not exist: {path}")
+    return ImageFont.truetype(path, size=size, layout_engine=ImageFont.Layout.BASIC)
 
 def inr(value: float) -> str:
     return "₹" + f"{value:,.0f}"
@@ -118,12 +142,12 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     d.rectangle((0, 0, WIDTH, 18), fill="#C7A66A")
     d.ellipse((720, -240, 1300, 340), fill="#1A2634")
     d.ellipse((-240, 1290, 300, 1830), fill="#172330")
-    title = find_font(lang, True, 76)
+    title = find_font("en", True, 76)
     sub = find_font(lang, False, 34)
     label_font = find_font(lang, True, 37)
     value_font = find_font(lang, True, 56)
     small = find_font(lang, False, 31)
-    footer_font = find_font(lang, True, 33)
+    footer_font = find_font("en", True, 33)
     d.text((70, 95), "Swarnam4U", font=title, fill="#F3E7CF")
     if lang == "ml":
         headline = "ഇന്നത്തെ നിരക്കുകൾ"
@@ -141,9 +165,10 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     d.text((76, 290), intro, font=sub, fill="#C6D0DB")
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
     date_label = date.strftime("%d %B %Y")
-    d.text((100, 407), date_label, font=find_font(lang, True, 42), fill="#F6EEDD")
+    # The date, clock, brand and URL use a Latin font even on Malayalam cards.
+    d.text((100, 407), date_label, font=find_font("en", True, 42), fill="#F6EEDD")
     slot_clock = {"morning": "10:00 IST", "midday": "13:00 IST", "evening": "17:00 IST"}[slot]
-    clock_font = find_font(lang, True, 38)
+    clock_font = find_font("en", True, 38)
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
     d.text((980 - clock_width, 410), slot_clock, font=clock_font, fill="#D8BC83")
     y = 550
@@ -155,7 +180,15 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
         d.text((115, y + 192), "PER GRAM" if lang == "en" else "ഒരു ഗ്രാം", font=small, fill="#ACB9C7")
         y += 292
     d.rounded_rectangle((65, 1460, 1015, 1630), radius=26, fill="#202E3B", outline="#5D6873", width=2)
-    d.text((100, 1500), source_text, font=find_font(lang, True, 35), fill="#E9D5AA")
+    if lang == "ml":
+        # Split Malayalam and Latin segments so neither script falls back to tofu glyphs.
+        source_ml = "ഉറവിടം:"
+        source_ml_font = find_font("ml", True, 35)
+        d.text((100, 1500), source_ml, font=source_ml_font, fill="#E9D5AA")
+        source_x = 100 + d.textbbox((0, 0), source_ml, font=source_ml_font)[2] + 16
+        d.text((source_x, 1500), "AKGSMA Kerala", font=find_font("en", True, 35), fill="#E9D5AA")
+    else:
+        d.text((100, 1500), source_text, font=find_font("en", True, 35), fill="#E9D5AA")
     d.text((100, 1560), disclaimer, font=small, fill="#C6D0DB")
     d.text((70, 1698), WEBSITE, font=footer_font, fill="#EACF95")
     d.text((72, 1765), "Verify rates before purchase", font=small, fill="#AEB9C6") if lang == "en" else d.text((72, 1765), "വാങ്ങുന്നതിന് മുമ്പ് നിരക്ക് ഉറപ്പാക്കുക", font=small, fill="#AEB9C6")

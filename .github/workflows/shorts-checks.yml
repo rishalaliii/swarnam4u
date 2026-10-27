@@ -26,9 +26,12 @@ jobs:
       - name: Install system fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y fontconfig fonts-noto-core fonts-dejavu-core
-      - name: Install Python packages
-        run: python -m pip install -r requirements-shorts.txt
+          sudo apt-get install -y fontconfig fonts-noto-core fonts-noto-extra fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
+      - name: Install Python packages with RAQM shaping support
+        run: |
+          python -m pip install -r requirements-shorts.txt
+          python -m pip install --force-reinstall --no-binary=Pillow "Pillow>=10.4,<13"
+          python -c "from PIL import features; assert features.check_feature('raqm'), 'Pillow RAQM shaping is required for Malayalam'"
       - name: Compile Python
         run: python -m py_compile scripts/shorts_preflight.py scripts/build_shorts.py scripts/upload_shorts.py tests/test_shorts_pipeline.py
       - name: Test card design and script content
