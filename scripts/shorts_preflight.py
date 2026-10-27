@@ -56,7 +56,7 @@ def main() -> int:
         "reason": None,
         "board_date": None,
         "rates": {},
-        "note": "Preflight only. No video rendered and no YouTube upload attempted."
+        "note": "This step validates current board rates only. Rendering follows separately; YouTube uploading remains separately gated."
     }
     try:
         if not RATES_PATH.exists():
@@ -90,8 +90,8 @@ def main() -> int:
         if saved_date != board_date:
             raise ValueError(f"Stored snapshot timestamp date is {saved_date or 'missing'}, but live board date is {board_date}.")
         report["status"] = "PREFLIGHT_PASSED"
-        report["reason"] = "Current board date and saved published rates match the live board. Render/upload remain disabled in this starter."
-        print("PREFLIGHT PASSED — live date and stored prices verified; rendering and uploads remain disabled.")
+        report["reason"] = "Current board date and saved published rates match the live board."
+        print("PREFLIGHT PASSED — live board date and saved published rates match.")
     except Exception as exc:
         report["reason"] = str(exc)
         print(f"PREFLIGHT BLOCKED: {exc}", file=sys.stderr)
