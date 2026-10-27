@@ -16,6 +16,17 @@ from zoneinfo import ZoneInfo
 from PIL import Image, ImageDraw, ImageFont, features
 import edge_tts
 
+try:
+    from rate_change_utils import (
+        SLOT_TIMES, card_change_label, compare_rate, spoken_change_text,
+        video_stem, video_title,
+    )
+except ImportError:
+    from scripts.rate_change_utils import (
+        SLOT_TIMES, card_change_label, compare_rate, spoken_change_text,
+        video_stem, video_title,
+    )
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "rates.json"
 OUT = ROOT / "output"
@@ -73,7 +84,7 @@ def inr(value: float) -> str:
         prefix = prefix[:-2]
     return "₹" + ",".join(reversed(groups)) + "," + last_three
 
-def board_values() -> tuple[dt.date, dict[str, float]]:
+def board_values() -> tuple[dt.date, dict[str, float], dict[str, dict]]:
     obj = json.loads(DATA.read_text(encoding="utf-8"))
     today = dt.datetime.now(IST).date()
     date_text = obj.get("gold", {}).get("22K · 916", {}).get("date")
@@ -88,6 +99,8 @@ def board_values() -> tuple[dt.date, dict[str, float]]:
         "Silver · 999": ("silver", "Silver · 999"),
     }
     values: dict[str, float] = {}
+    comparisons: dict[str, dict] = {}
+    expected_previous_date = (board_date - dt.timedelta(days=1)).isoformat()
     for label, (group, key) in keys.items():
         entry = obj.get(group, {}).get(key, {})
         if entry.get("date") != date_text:
@@ -98,29 +111,38 @@ def board_values() -> tuple[dt.date, dict[str, float]]:
             raise ValueError(f"Missing valid rate for {label}.")
         if value <= 0:
             raise ValueError(f"Invalid rate for {label}.")
+        previous = entry.get("yesterday")
+        previous_date = entry.get("yesterday_date")
+        # A dated previous value is usable only when it is from the prior calendar day.
+        # Legacy snapshots without yesterday_date use the existing yesterday field.
+        if previous_date and previous_date != expected_previous_date:
+            previous = None
         values[label] = value
-    # Confirm board date and the published-rate values in the latest preflight report.
+        comparisons[label] = compare_rate(value, previous)
+        comparisons[label]["previous_date"] = previous_date or (expected_previous_date if previous is not None else None)
     report_path = OUT / "shorts-preflight.json"
     if not report_path.exists():
         raise ValueError("Preflight report missing. Run scripts/shorts_preflight.py first.")
     report = json.loads(report_path.read_text(encoding="utf-8"))
     if report.get("status") != "PREFLIGHT_PASSED" or report.get("board_date") != date_text:
         raise ValueError("Preflight did not pass for this board date.")
-    return board_date, values
+    return board_date, values, comparisons
 
-def script_text(lang: str, date: dt.date, values: dict[str, float]) -> str:
-    """Keep narration concise while preserving per-gram and calculated 8g pawan prices."""
+def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons: dict[str, dict]) -> str:
+    """Narrate rates, pawan totals, and the available 22K day-over-day move."""
     date_en = date.strftime("%d %B %Y")
     v22 = inr(values["22K · 916"])
     v18 = inr(values["18K · 750"])
     silver = inr(values["Silver · 999"])
     v22_pawan = inr(values["22K · 916"] * 8)
     v18_pawan = inr(values["18K · 750"] * 8)
+    gold_change = spoken_change_text(comparisons["22K · 916"], lang)
     if lang == "en":
         return (
             f"AKGSMA Kerala gold and silver rates for {date_en}. "
             f"Twenty-two carat 916 gold: {v22} per gram. "
             f"One pawan, equal to eight grams, is {v22_pawan}. "
+            f"{gold_change} "
             f"Eighteen carat 750 gold: {v18} per gram; one pawan is {v18_pawan}. "
             f"999 silver: {silver} per gram. "
             f"Pawan amounts are calculated from per-gram rates. "
@@ -130,6 +152,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float]) -> str:
         f"{date.day} {date.strftime('%B')} തീയതിയിലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
         f"22 കാരറ്റ് 916 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
         f"എട്ട് ഗ്രാം, ഒരു പവൻ {v22_pawan}. "
+        f"{gold_change} "
         f"18 കാരറ്റ് 750 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}; ഒരു പവൻ {v18_pawan}. "
         f"999 വെള്ളി ഒരു ഗ്രാമിന് {silver}. "
         f"പവൻ തുക ഗ്രാമിന്റെ നിരക്കിൽ നിന്ന് കണക്കാക്കിയതാണ്. "
@@ -152,7 +175,7 @@ def wrap_to_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeType
         lines.append(line)
     return lines
 
-def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png: pathlib.Path) -> None:
+def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: dict[str, dict], slot: str, png: pathlib.Path) -> None:
     im = Image.new("RGB", (WIDTH, HEIGHT), "#101722")
     d = ImageDraw.Draw(im)
     # Restrained dark navy, warm ivory, and antique-gold palette.
@@ -192,7 +215,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
     date_label = date.strftime("%d %B %Y")
     d.text((100, 407), date_label, font=find_font("en", True, 42), fill="#F6EEDD")
-    slot_clock = {"morning": "10:00 IST", "midday": "13:00 IST", "evening": "17:00 IST"}[slot]
+    slot_clock = f"{SLOT_TIMES[slot]} IST"
     clock_font = find_font("en", True, 38)
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
     d.text((980 - clock_width, 410), slot_clock, font=clock_font, fill="#D8BC83")
@@ -203,6 +226,8 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     pawan_value_font = find_font("en", True, 40)
     gram_font = find_font("en", False, 24) if lang == "en" else find_font("ml", False, 24)
     rate_font = find_font("en", True, 49)
+    change_font = find_font(lang, True, 17 if lang == "ml" else 18)
+    change_amount_font = find_font("en", True, 18)
     for label, key in labels:
         d.rounded_rectangle((65, y, 1015, y + card_height), radius=28, fill="#182330", outline="#354455", width=2)
         d.rounded_rectangle((65, y, 82, y + card_height), radius=8, fill="#C7A66A")
@@ -215,6 +240,12 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
             d.text((112, y + 190), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF")
         else:
             d.text((112, y + 178), silver_note, font=gram_font, fill="#D8BC83")
+        label_text, change_amount = card_change_label(comparisons[key], lang)
+        d.text((112, y + 242), label_text, font=change_font, fill="#D8BC83")
+        if change_amount:
+            change_value = f"{change_amount}/g"
+            amount_width = d.textbbox((0, 0), change_value, font=change_amount_font)[2]
+            d.text((970 - amount_width, y + 241), change_value, font=change_amount_font, fill="#FFFFFF")
         y += 290
 
     d.rounded_rectangle((65, 1460, 1015, 1630), radius=26, fill="#202E3B", outline="#5D6873", width=2)
@@ -269,24 +300,40 @@ def render_video(image_path: pathlib.Path, audio_path: pathlib.Path, video_path:
         raise RuntimeError(f"Video output is suspiciously small: {video_path.name}")
 
 async def main_async(slot: str) -> int:
-    date, values = board_values()
+    date, values, comparisons = board_values()
     out_dir = OUT / f"{date.isoformat()}-{slot}"
     out_dir.mkdir(parents=True, exist_ok=True)
-    manifest = {"date": date.isoformat(), "slot": slot, "website": WEBSITE, "videos": [], "publish_enabled": os.environ.get("YOUTUBE_AUTO_PUBLISH", "").lower() == "true"}
+    primary_change = comparisons["22K · 916"]
+    manifest = {
+        "date": date.isoformat(),
+        "slot": slot,
+        "publish_time_ist": SLOT_TIMES[slot],
+        "website": WEBSITE,
+        "comparisons": comparisons,
+        "videos": [],
+        "publish_enabled": os.environ.get("YOUTUBE_AUTO_PUBLISH", "").lower() == "true",
+    }
     for lang in ("en", "ml"):
-        stem = f"swarnam4u-{date.isoformat()}-{slot}-{lang}"
+        stem = video_stem(lang, date, slot, primary_change)
         png, mp3, mp4 = out_dir / f"{stem}.png", out_dir / f"{stem}.mp3", out_dir / f"{stem}.mp4"
-        text = script_text(lang, date, values)
-        draw_card(lang, date, values, slot, png)
-        await make_voice(text, VOICES[lang], mp3)
+        narration = script_text(lang, date, values, comparisons)
+        draw_card(lang, date, values, comparisons, slot, png)
+        await make_voice(narration, VOICES[lang], mp3)
         duration = probe_duration(mp3)
         if duration > 55:
             raise RuntimeError(f"{lang} narration is {duration:.1f}s; limit is 55 seconds. Shorten the script before rendering.")
         render_video(png, mp3, mp4, duration)
         manifest["videos"].append({
-            "language": lang, "voice": VOICES[lang], "script": text,
-            "image": png.name, "audio": mp3.name, "video": mp4.name,
-            "duration_seconds": round(probe_duration(mp4), 2), "bytes": mp4.stat().st_size
+            "language": lang,
+            "voice": VOICES[lang],
+            "script": narration,
+            "youtube_title": video_title(lang, date, slot, primary_change),
+            "primary_gold_change": primary_change,
+            "image": png.name,
+            "audio": mp3.name,
+            "video": mp4.name,
+            "duration_seconds": round(probe_duration(mp4), 2),
+            "bytes": mp4.stat().st_size,
         })
     (out_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
