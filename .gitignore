@@ -1,0 +1,6 @@
+# Local Google OAuth client credentials and refresh tokens
+client_secret*.json
+oauth-client*.json
+youtube-refresh-token.txt
+.youtube-token*
+token.json
