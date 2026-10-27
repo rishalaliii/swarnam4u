@@ -29,13 +29,13 @@ If all three runs succeed, that is six generated clips per day: three English an
 The scheduled build only runs once the workflow is present on the default branch. It is intentionally not enabled for YouTube uploading yet.
 
 ## Current limitations
-- The uploader script is included, but it is disabled by default. Publishing happens only if the repository Actions variable `YOUTUBE_AUTO_PUBLISH` is explicitly set to `true` and both OAuth secrets are present.
+- The uploader has explicit `private_test` and `schedule` modes. Scheduled publishing remains disabled by default; daily uploads happen only if the repository Actions variable `YOUTUBE_AUTO_PUBLISH` is explicitly set to `true` and both OAuth secrets are present. A private test run leaves its videos private and does not set `publishAt`.
 - Every newly uploaded English or Malayalam Short uses the shared YouTube description template. It includes: “Check out the latest rates via https://swarnam4u.onrender.com”.
 - The current board date and saved published-rate values must pass preflight. When AKGSMA has not published today's board rates, generation stops; no stale rates are published.
 - The video displays only the board's published 22K/916, 18K/750 and silver 999 values. It does not show 925 silver because AKGSMA has been showing it as unavailable.
 - Calculated 24K/14K prices, platinum fallbacks, and estimated values are deliberately excluded from these Shorts.
 - Neural TTS availability, Malayalam pronunciation, final aesthetics and end-to-end video playback still need review from a successful live workflow artifact.
-- YouTube setup still requires enabling YouTube Data API v3 for a Google Cloud project, creating an OAuth client, and securely adding two Actions Secrets: `YOUTUBE_CLIENT_SECRET_JSON` (the OAuth client JSON contents) and `YOUTUBE_REFRESH_TOKEN` (a refresh token granted the YouTube upload scope).
+- YouTube setup still requires enabling YouTube Data API v3 for a Google Cloud project, creating an OAuth Desktop-app client, running `scripts/create_youtube_refresh_token.py`, and securely adding two Actions Secrets. See the repository README for the step-by-step process and the seven-day refresh-token warning for OAuth consent screens left in Testing.
 - Only after a successful artifact review should the repository Actions variable `YOUTUBE_AUTO_PUBLISH=true` be added. Leave the variable absent otherwise. Never paste credentials or refresh tokens into issues or chat.
 - The uploader schedules the English and Malayalam pair for the slot's target time, and checks the latest 50 entries in the channel's uploads playlist to avoid re-uploading matching titles. Review this behavior on a test channel before production.
 
