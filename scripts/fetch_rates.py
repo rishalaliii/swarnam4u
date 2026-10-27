@@ -105,9 +105,12 @@ def allowed_by_robots():
     try:
         r = requests.get(URL + "/robots.txt", timeout=15, headers={"User-Agent": UA})
     except requests.RequestException:
+        # If permission cannot be checked, do not scrape the primary source; use the fallbacks.
+        return False
+    if r.status_code == 404:
         return True
     if r.status_code != 200:
-        return True
+        return False
     rp = urllib.robotparser.RobotFileParser()
     rp.parse(r.text.splitlines())
     return rp.can_fetch(UA, URL + "/")
