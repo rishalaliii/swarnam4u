@@ -29,10 +29,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install system fonts
+        timeout-minutes: 8
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fontconfig fonts-noto-core fonts-noto-extra fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
+          APT_OPTS="-o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10"
+          timeout --kill-after=10s 90s sudo apt-get $APT_OPTS update -qq || echo "::warning::apt-get update stalled; retrying install with runner package indexes"
+          timeout --kill-after=10s 300s sudo apt-get $APT_OPTS install -y --no-install-recommends fontconfig fonts-noto-core fonts-noto-extra fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
       - name: Install Python packages with RAQM shaping support
+        timeout-minutes: 8
         run: |
           python -m pip install -r requirements-shorts.txt
           python -m pip install --force-reinstall --no-binary=Pillow "Pillow>=10.4,<13"
