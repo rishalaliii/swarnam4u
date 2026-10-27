@@ -147,7 +147,7 @@ def video_title(
         raise ValueError(f"Unknown publish slot: {slot}")
     if lang not in ("en", "ml"):
         raise ValueError(f"Unsupported language: {lang}")
-    hashtags = "#KeralaGoldRate #Shorts"
+    hashtags = "#IndiaGoldRate #Shorts" if lang == "en" else "#KeralaGoldRate #Shorts"
 
     # Keep English titles exactly as before; localize the human-readable parts only for Malayalam.
     if lang == "en":
