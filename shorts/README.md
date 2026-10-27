@@ -8,6 +8,9 @@ This branch adds a first cloud-generated bilingual video stage. It does not chan
 - Generates one English and one Malayalam vertical video per run.
 - Adds the publication date, source label, rates, and the exact website text `swarnam4u.onrender.com`.
 - Generates neural voice tracks and renders 1080×1920 H.264/AAC MP4s.
+- Gold cards show both the per-gram board rate and the calculated 8-gram/1-pawan total with Indian-style rupee grouping.
+- The voiceover includes both 8-gram gold totals and clarifies that those totals are calculated from the per-gram prices.
+- Malayalam card labels avoid the unsupported decorative bullet glyph that previously appeared as square boxes.
 - Malayalam cards use Noto Sans Malayalam with RAQM shaping; Latin brand/URL/date/source strings use DejaVu Sans, so missing Latin glyphs cannot silently become square boxes.
 - The workflow checks RAQM is enabled and the font family selected for Malayalam is actually Noto Sans Malayalam; it fails rather than falling back silently.
 - Checks generated dimensions and file size, then saves MP4, PNG, MP3, and a manifest as a workflow artifact for review.

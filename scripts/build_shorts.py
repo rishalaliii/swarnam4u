@@ -61,7 +61,17 @@ def find_font(language: str, bold: bool = False, size: int = 48) -> ImageFont.Fr
     return ImageFont.truetype(path, size=size, layout_engine=ImageFont.Layout.BASIC)
 
 def inr(value: float) -> str:
-    return "₹" + f"{value:,.0f}"
+    """Format INR using Indian digit grouping (for example ₹1,05,080)."""
+    digits = str(int(round(value)))
+    if len(digits) <= 3:
+        return "₹" + digits
+    last_three = digits[-3:]
+    prefix = digits[:-3]
+    groups: list[str] = []
+    while prefix:
+        groups.append(prefix[-2:])
+        prefix = prefix[:-2]
+    return "₹" + ",".join(reversed(groups)) + "," + last_three
 
 def board_values() -> tuple[dt.date, dict[str, float]]:
     obj = json.loads(DATA.read_text(encoding="utf-8"))
@@ -100,21 +110,31 @@ def board_values() -> tuple[dt.date, dict[str, float]]:
 
 def script_text(lang: str, date: dt.date, values: dict[str, float]) -> str:
     date_en = date.strftime("%d %B %Y")
-    v22, v18, silver = (inr(values["22K · 916"]), inr(values["18K · 750"]), inr(values["Silver · 999"]))
+    v22 = inr(values["22K · 916"])
+    v18 = inr(values["18K · 750"])
+    silver = inr(values["Silver · 999"])
+    v22_pawan = inr(values["22K · 916"] * 8)
+    v18_pawan = inr(values["18K · 750"] * 8)
     if lang == "en":
         return (
             f"Here is the Kerala gold and silver rate update for {date_en}. "
             f"Twenty-two carat gold, nine-one-six purity, is {v22} per gram. "
+            f"One pawan, equal to eight grams, is {v22_pawan} for twenty-two carat gold. "
             f"Eighteen carat gold is {v18} per gram. "
+            f"One pawan, equal to eight grams, is {v18_pawan} for eighteen carat gold. "
             f"Silver, nine-nine-nine purity, is {silver} per gram. "
-            f"These are the published AKGSMA board rates dated {date_en}. "
+            f"The pawan totals are calculated from the published per-gram rates. "
+            f"These are the AKGSMA board rates dated {date_en}. "
             f"For updates, visit {WEBSITE}."
         )
     return (
         f"ഇന്നത്തെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. തീയതി {date.day} {date.strftime('%B')} {date.year}. "
         f"22 കാരറ്റ്, 916 പരിശുദ്ധിയുള്ള സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
+        f"22 കാരറ്റ് സ്വർണ്ണത്തിന്റെ ഒരു പവൻ, അതായത് എട്ട് ഗ്രാം, {v22_pawan}. "
         f"18 കാരറ്റ് സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}. "
-        f"999 പരിശുദ്ധിയുള്ള വെള്ളി ഒരു ഗ്രാമിന് {silver}. "
+        f"18 കാരറ്റ് സ്വർണ്ണത്തിന്റെ ഒരു പവൻ, അതായത് എട്ട് ഗ്രാം, {v18_pawan}. "
+        f"വെള്ളിയുടെ 999 പരിശുദ്ധിയുള്ള നിരക്ക് ഒരു ഗ്രാമിന് {silver}. "
+        f"പവൻ തുക ഗ്രാമിന്റെ നിരക്കിൽ നിന്ന് കണക്കാക്കിയതാണ്. "
         f"ഇവ {date_en} തീയതിയിലെ എ കെ ജി എസ് എം എ ബോർഡ് പ്രസിദ്ധീകരിച്ച നിരക്കുകളാണ്. "
         f"കൂടുതൽ വിവരങ്ങൾക്ക് {WEBSITE} സന്ദർശിക്കുക."
     )
@@ -144,44 +164,64 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     d.ellipse((-240, 1290, 300, 1830), fill="#172330")
     title = find_font("en", True, 76)
     sub = find_font(lang, False, 34)
-    label_font = find_font(lang, True, 37)
+    label_font = find_font(lang, True, 34)
     value_font = find_font(lang, True, 56)
     small = find_font(lang, False, 31)
     footer_font = find_font("en", True, 33)
     d.text((70, 95), "Swarnam4U", font=title, fill="#F3E7CF")
     if lang == "ml":
         headline = "ഇന്നത്തെ നിരക്കുകൾ"
-        intro = "കേരളം • സ്വർണ്ണവും വെള്ളിയും"
-        labels = [("22 കാരറ്റ്  •  916", "22K · 916"), ("18 കാരറ്റ്  •  750", "18K · 750"), ("വെള്ളി  •  999", "Silver · 999")]
-        source_text = "ഉറവിടം: AKGSMA Kerala"
+        # Avoid decorative bullet glyphs: the selected Malayalam font renders the bullet as a square.
+        intro = "കേരളത്തിലെ സ്വർണ്ണം, വെള്ളി നിരക്കുകൾ"
+        labels = [("22 കാരറ്റ് (916)", "22K · 916"), ("18 കാരറ്റ് (750)", "18K · 750"), ("വെള്ളി (999)", "Silver · 999")]
+        source_text = "ഉറവിടം:"
         disclaimer = "ബോർഡ് പ്രസിദ്ധീകരിച്ച നിരക്കുകൾ"
+        gram_text = "ഒരു ഗ്രാം"
+        pawan_text = "ഒരു പവൻ (8 ഗ്രാം)"
+        pawan_note = "പവൻ തുക ഗ്രാമിന്റെ നിരക്കിൽ നിന്ന് കണക്കാക്കിയതാണ്"
+        silver_note = "ഒരു ഗ്രാമിന്റെ നിരക്ക് മാത്രം"
     else:
         headline = "GOLD & SILVER RATES"
-        intro = "KERALA • PUBLISHED BOARD RATES"
-        labels = [("Gold 22K  •  916", "22K · 916"), ("Gold 18K  •  750", "18K · 750"), ("Silver  •  999", "Silver · 999")]
-        source_text = "Source: AKGSMA Kerala"
-        disclaimer = "Published board rates • Per gram"
+        intro = "KERALA | PUBLISHED BOARD RATES"
+        labels = [("Gold 22K (916)", "22K · 916"), ("Gold 18K (750)", "18K · 750"), ("Silver (999)", "Silver · 999")]
+        source_text = "Source:"
+        disclaimer = "Published board rates | Per gram"
+        gram_text = "PER GRAM"
+        pawan_text = "1 PAWAN (8 GRAMS)"
+        pawan_note = "Pawan total calculated from per-gram rate"
+        silver_note = "Per-gram rate only"
     d.text((74, 215), headline, font=find_font(lang, True, 47), fill="#D8BC83")
     d.text((76, 290), intro, font=sub, fill="#C6D0DB")
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
     date_label = date.strftime("%d %B %Y")
-    # The date, clock, brand and URL use a Latin font even on Malayalam cards.
     d.text((100, 407), date_label, font=find_font("en", True, 42), fill="#F6EEDD")
     slot_clock = {"morning": "10:00 IST", "midday": "13:00 IST", "evening": "17:00 IST"}[slot]
     clock_font = find_font("en", True, 38)
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
     d.text((980 - clock_width, 410), slot_clock, font=clock_font, fill="#D8BC83")
-    y = 550
+
+    y = 540
+    card_height = 275
+    pawan_label_font = find_font(lang, True, 23)
+    pawan_value_font = find_font("en", True, 40)
+    gram_font = find_font("en", False, 24) if lang == "en" else find_font("ml", False, 24)
+    rate_font = find_font("en", True, 49)
     for label, key in labels:
-        d.rounded_rectangle((65, y, 1015, y + 260), radius=28, fill="#182330", outline="#354455", width=2)
-        d.rounded_rectangle((65, y, 82, y + 260), radius=8, fill="#C7A66A")
-        d.text((112, y + 42), label, font=label_font, fill="#E4D4B5")
-        d.text((112, y + 112), inr(values[key]), font=value_font, fill="#FFFFFF")
-        d.text((115, y + 192), "PER GRAM" if lang == "en" else "ഒരു ഗ്രാം", font=small, fill="#ACB9C7")
-        y += 292
+        d.rounded_rectangle((65, y, 1015, y + card_height), radius=28, fill="#182330", outline="#354455", width=2)
+        d.rounded_rectangle((65, y, 82, y + card_height), radius=8, fill="#C7A66A")
+        d.text((112, y + 16), label, font=label_font, fill="#E4D4B5")
+        d.text((112, y + 60), inr(values[key]), font=rate_font, fill="#FFFFFF")
+        d.text((115, y + 119), gram_text, font=gram_font, fill="#ACB9C7")
+        d.line((112, y + 153, 968, y + 153), fill="#566170", width=2)
+        if key != "Silver · 999":
+            d.text((112, y + 161), pawan_text, font=pawan_label_font, fill="#D8BC83")
+            d.text((112, y + 190), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF")
+        else:
+            d.text((112, y + 178), silver_note, font=gram_font, fill="#D8BC83")
+        y += 290
+
     d.rounded_rectangle((65, 1460, 1015, 1630), radius=26, fill="#202E3B", outline="#5D6873", width=2)
     if lang == "ml":
-        # Split Malayalam and Latin segments so neither script falls back to tofu glyphs.
         source_ml = "ഉറവിടം:"
         source_ml_font = find_font("ml", True, 35)
         d.text((100, 1500), source_ml, font=source_ml_font, fill="#E9D5AA")
@@ -189,9 +229,14 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
         d.text((source_x, 1500), "AKGSMA Kerala", font=find_font("en", True, 35), fill="#E9D5AA")
     else:
         d.text((100, 1500), source_text, font=find_font("en", True, 35), fill="#E9D5AA")
-    d.text((100, 1560), disclaimer, font=small, fill="#C6D0DB")
+    d.text((100, 1550), disclaimer, font=small, fill="#C6D0DB")
+    note_font = find_font(lang, False, 22)
+    d.text((100, 1590), pawan_note, font=note_font, fill="#ADB9C5")
     d.text((70, 1698), WEBSITE, font=footer_font, fill="#EACF95")
-    d.text((72, 1765), "Verify rates before purchase", font=small, fill="#AEB9C6") if lang == "en" else d.text((72, 1765), "വാങ്ങുന്നതിന് മുമ്പ് നിരക്ക് ഉറപ്പാക്കുക", font=small, fill="#AEB9C6")
+    if lang == "en":
+        d.text((72, 1765), "Verify rates before purchase", font=find_font("en", False, 27), fill="#AEB9C6")
+    else:
+        d.text((72, 1765), "വാങ്ങുന്നതിന് മുമ്പ് നിരക്ക് ഉറപ്പാക്കുക", font=find_font("ml", False, 27), fill="#AEB9C6")
     d.rectangle((0, HEIGHT - 18, WIDTH, HEIGHT), fill="#C7A66A")
     im.save(png, "PNG", optimize=True)
 
