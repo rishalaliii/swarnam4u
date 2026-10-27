@@ -251,7 +251,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
         label_text, change_amount = card_change_label(comparisons[key], lang)
         d.text((112, y + 242), label_text, font=change_font, fill="#D8BC83")
         if change_amount:
-            change_value = f"{change_amount}/g"
+            change_value = f"{change_amount}/ഗ്രാം" if lang == "ml" else f"{change_amount}/g"
             amount_width = d.textbbox((0, 0), change_value, font=change_amount_font)[2]
             d.text((970 - amount_width, y + 241), change_value, font=change_amount_font, fill="#FFFFFF")
         y += 290
