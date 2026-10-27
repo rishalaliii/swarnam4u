@@ -126,7 +126,9 @@ def find_exact(text, rx, lo, hi):
 
 def page_has_current_date(text: str, today: str) -> bool:
     """Require an explicit current date near a page header before accepting fallback prices as today's rates."""
-    months = {m: i for i, m in enumerate("January February March April May June July August September October November December".split(), 1)}
+    month_names = "January February March April May June July August September October November December".split()
+    months = {name: i for i, name in enumerate(month_names, 1)}
+    months.update({name[:3]: i for i, name in enumerate(month_names, 1)})
     prefix = re.sub(r"\s+", " ", text[:4000])
 
     def iso(year: str, month: str, day: str) -> str | None:
