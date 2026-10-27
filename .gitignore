@@ -1,0 +1,16 @@
+# Local secrets and OAuth credentials
+client_secret*.json
+client_secrets*.json
+token.json
+youtube-oauth*.json
+.env
+.env.*
+
+# Local Python/build outputs
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+output/
+*.zip
