@@ -1,6 +1,15 @@
 name: Build Swarnam4U Shorts
 
 on:
+  # Rebuild reviewable artifacts when the production generator changes on main.
+  # Push-triggered builds never publish to YouTube.
+  push:
+    branches: [main]
+    paths:
+      - "scripts/build_shorts.py"
+      - "scripts/upload_shorts.py"
+      - "requirements-shorts.txt"
+      - ".github/workflows/build-shorts.yml"
   schedule:
     # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
     # 10:10, 12:45 and 16:45 India time. GitHub Actions can be delayed.
@@ -56,6 +65,9 @@ jobs:
         run: |
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             SLOT="$INPUT_SLOT"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            # Artifact-only verification build after production code changes.
+            SLOT="morning"
           else
             case "$SCHEDULE" in
               "40 4 * * *") SLOT="morning" ;;
@@ -70,8 +82,8 @@ jobs:
         env:
           YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_AUTO_PUBLISH }}
         run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
-      - name: Publish to YouTube (explicit opt-in only)
-        if: vars.YOUTUBE_AUTO_PUBLISH == 'true'
+      - name: Publish to YouTube (explicit opt-in only; never on a code-push verification build)
+        if: vars.YOUTUBE_AUTO_PUBLISH == 'true' && github.event_name != 'push'
         env:
           SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
           YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
