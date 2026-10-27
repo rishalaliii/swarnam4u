@@ -44,7 +44,7 @@ permissions:
 concurrency:
   # Serialize the same scheduled/manual slot, but never let a push-only artifact build
   # block a future scheduled publication if a runner stalls.
-  group: swarnam4u-shorts-build-${{ github.event.schedule || inputs.slot || github.run_id }}
+  group: swarnam4u-shorts-build-${{ (github.event_name == 'schedule' && (github.event.schedule == '40 4 * * *' && 'morning' || github.event.schedule == '15 7 * * *' && 'midday' || github.event.schedule == '15 11 * * *' && 'evening' || github.run_id)) || (github.event_name == 'workflow_dispatch' && inputs.slot) || github.run_id }}
   cancel-in-progress: false
 
 jobs:
