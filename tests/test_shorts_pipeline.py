@@ -81,7 +81,9 @@ class ShortsDesignTests(unittest.TestCase):
             self.assertIn("#Shorts", title)
             self.assertLessEqual(len(title), 100)
         self.assertIn("13:00 IST", rate_change_utils.video_title("en", self.date, "midday", change))
-        self.assertIn("വൈകിട്ട് 17:00", rate_change_utils.video_title("ml", self.date, "evening", change))
+        evening_malayalam_title = rate_change_utils.video_title("ml", self.date, "evening", change)
+        self.assertIn("17:00", evening_malayalam_title)
+        self.assertNotIn("IST", evening_malayalam_title)
 
     def test_all_movement_title_variants_keep_hashtags_and_fit_limit(self):
         comparisons = [
