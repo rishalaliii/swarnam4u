@@ -56,3 +56,7 @@ The publish gate stays disabled until those checks are completed. Do not edit sn
 - Titles preserve the language-specific gold-rate name, full date, 24-hour IST slot time, and previous-day movement.
 - The title builder tests every movement state and enforces YouTube's 100-character maximum without cutting off the hashtags.
 - The hashtags are relevant topic labels, not a guarantee of maximum reach; review audience retention and traffic sources in YouTube Analytics to tune them over time.
+
+
+## Malayalam-only YouTube title localization
+For Malayalam uploads only, the title's name, month/date, time label and price-movement phrase are in Malayalam script (for example: `ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 10:30 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts`). The existing English title format is unchanged. The English hashtags are retained intentionally for searchable topic keywords. When needed, the title drops the day-part or shortens the movement phrase while staying within YouTube's 100-character limit.
