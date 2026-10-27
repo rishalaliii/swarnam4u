@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from PIL import Image
+from PIL import Image, features
 from scripts import build_shorts, shorts_preflight
 
 
@@ -52,6 +52,13 @@ class ShortsDesignTests(unittest.TestCase):
     def test_parser_fails_if_board_date_is_missing(self):
         with self.assertRaisesRegex(ValueError, "board date"):
             shorts_preflight.parse_board_text("22K916 (1gm) - ₹ 13085")
+
+    def test_malayalam_font_and_raqm_are_required(self):
+        self.assertTrue(features.check_feature("raqm"), "CI Pillow must include RAQM for Malayalam shaping")
+        malayalam = build_shorts.find_font("ml", True, 32)
+        latin = build_shorts.find_font("en", True, 32)
+        self.assertIn("malayalam", malayalam.getname()[0].lower())
+        self.assertIn("dejavu sans", latin.getname()[0].lower())
 
     def test_both_rate_cards_are_vertical_1080_by_1920(self):
         with tempfile.TemporaryDirectory() as temp:
