@@ -105,6 +105,7 @@ def board_values() -> tuple[dt.date, dict[str, float], dict[str, dict]]:
         "22K · 916": ("gold", "22K · 916"),
         "18K · 750": ("gold", "18K · 750"),
         "Silver · 999": ("silver", "Silver · 999"),
+        "Silver · 925": ("silver", "Silver · 925"),
     }
     values: dict[str, float] = {}
     comparisons: dict[str, dict] = {}
@@ -142,6 +143,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
     v22 = inr(values["22K · 916"])
     v18 = inr(values["18K · 750"])
     silver = inr(values["Silver · 999"])
+    silver925 = inr(values["Silver · 925"])
     v22_pawan = inr(values["22K · 916"] * 8)
     v18_pawan = inr(values["18K · 750"] * 8)
     gold_change = spoken_change_text(comparisons["22K · 916"], lang)
@@ -153,6 +155,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
             f"{gold_change} "
             f"Eighteen carat 750 gold: {v18} per gram; one pawan is {v18_pawan}. "
             f"999 silver: {silver} per gram. "
+            f"925 sterling silver: {silver925} per gram. "
             f"Pawan amounts are calculated from per-gram rates. "
             f"Visit {WEBSITE}."
         )
@@ -163,6 +166,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
         f"{gold_change} "
         f"18 കാരറ്റ് 750 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}; ഒരു പവൻ {v18_pawan}. "
         f"999 വെള്ളി ഒരു ഗ്രാമിന് {silver}. "
+        f"925 വെള്ളി ഒരു ഗ്രാമിന് {silver925}. "
         f"പവൻ തുക ഗ്രാമിന്റെ നിരക്കിൽ നിന്ന് കണക്കാക്കിയതാണ്. "
         f"{WEBSITE} സന്ദർശിക്കുക."
     )
@@ -201,7 +205,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
         headline = "ഇന്നത്തെ നിരക്കുകൾ"
         # Avoid decorative bullet glyphs: the selected Malayalam font renders the bullet as a square.
         intro = "കേരളത്തിലെ സ്വർണ്ണം, വെള്ളി നിരക്കുകൾ"
-        labels = [("22 കാരറ്റ് (916)", "22K · 916"), ("18 കാരറ്റ് (750)", "18K · 750"), ("വെള്ളി (999)", "Silver · 999")]
+        labels = [("22 കാരറ്റ് (916)", "22K · 916"), ("18 കാരറ്റ് (750)", "18K · 750"), ("വെള്ളി (999)", "Silver · 999"), ("വെള്ളി (925)", "Silver · 925")]
         source_text = "ഉറവിടം:"
         disclaimer = "ബോർഡ് പ്രസിദ്ധീകരിച്ച നിരക്കുകൾ"
         gram_text = "ഒരു ഗ്രാം"
@@ -211,9 +215,9 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     else:
         headline = "GOLD & SILVER RATES"
         intro = "INDIA | GOLD & SILVER RATE UPDATE"
-        labels = [("Gold 22K (916)", "22K · 916"), ("Gold 18K (750)", "18K · 750"), ("Silver (999)", "Silver · 999")]
+        labels = [("Gold 22K (916)", "22K · 916"), ("Gold 18K (750)", "18K · 750"), ("Silver (999)", "Silver · 999"), ("Silver (925)", "Silver · 925")]
         source_text = "Source:"
-        disclaimer = "Published board rates | Per gram"
+        disclaimer = "Board rates; 925 calculated if not published | Per gram"
         gram_text = "PER GRAM"
         pawan_text = "1 PAWAN (8 GRAMS)"
         pawan_note = "Pawan total calculated from per-gram rate"
@@ -230,35 +234,35 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
     d.text((980 - clock_width, 410), slot_clock, font=clock_font, fill="#D8BC83")
 
-    y = 540
-    card_height = 275
-    pawan_label_font = find_font(lang, True, 23)
-    pawan_value_font = find_font("en", True, 46)
+    y = 530
+    card_height = 220
+    pawan_label_font = find_font(lang, True, 19)
+    pawan_value_font = find_font("en", True, 37)
     gram_font = find_font("en", False, 24) if lang == "en" else find_font("ml", False, 24)
-    rate_font = find_font("en", True, 62)
-    change_font = find_font(lang, True, 17 if lang == "ml" else 18)
+    rate_font = find_font("en", True, 52)
+    change_font = find_font(lang, True, 15 if lang == "ml" else 16)
     change_amount_font = find_font("en", True, 18)
     for label, key in labels:
         d.rounded_rectangle((65, y, 1015, y + card_height), radius=28, fill="#182330", outline="#354455", width=2)
         d.rounded_rectangle((65, y, 82, y + card_height), radius=8, fill="#C7A66A")
-        d.text((112, y + 16), label, font=label_font, fill="#E4D4B5")
-        d.text((112, y + 56), inr(values[key]), font=rate_font, fill="#FFFFFF", stroke_width=1, stroke_fill="#FFFFFF")
-        d.text((115, y + 128), gram_text, font=gram_font, fill="#D4DEE8")
-        d.line((112, y + 160, 968, y + 160), fill="#718094", width=2)
-        if key != "Silver · 999":
-            d.text((112, y + 166), pawan_text, font=pawan_label_font, fill="#E7C879")
-            d.text((112, y + 194), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF", stroke_width=1, stroke_fill="#FFFFFF")
+        d.text((112, y + 10), label, font=label_font, fill="#E4D4B5")
+        d.text((112, y + 42), inr(values[key]), font=rate_font, fill="#FFFFFF", stroke_width=1, stroke_fill="#FFFFFF")
+        d.text((115, y + 100), gram_text, font=gram_font, fill="#D4DEE8")
+        d.line((112, y + 127, 968, y + 127), fill="#718094", width=2)
+        if key not in {"Silver · 999", "Silver · 925"}:
+            d.text((112, y + 133), pawan_text, font=pawan_label_font, fill="#E7C879")
+            d.text((112, y + 154), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF", stroke_width=1, stroke_fill="#FFFFFF")
         else:
-            d.text((112, y + 182), silver_note, font=gram_font, fill="#E7C879")
+            d.text((112, y + 147), silver_note, font=gram_font, fill="#E7C879")
         label_text, change_amount = card_change_label(comparisons[key], lang)
-        d.text((112, y + 242), label_text, font=change_font, fill="#E7C879")
+        d.text((112, y + 192), label_text, font=change_font, fill="#E7C879")
         if change_amount:
             change_value = f"{change_amount}/g"
             amount_width = d.textbbox((0, 0), change_value, font=change_amount_font)[2]
-            d.text((970 - amount_width, y + 241), change_value, font=change_amount_font, fill="#FFFFFF")
-        y += 290
+            d.text((970 - amount_width, y + 191), change_value, font=change_amount_font, fill="#FFFFFF")
+        y += 235
 
-    d.rounded_rectangle((65, 1460, 1015, 1630), radius=26, fill="#202E3B", outline="#5D6873", width=2)
+    d.rounded_rectangle((65, 1485, 1015, 1650), radius=26, fill="#202E3B", outline="#5D6873", width=2)
     if lang == "ml":
         source_ml = "ഉറവിടം:"
         source_ml_font = find_font("ml", True, 35)
@@ -267,7 +271,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
         d.text((source_x, 1500), "AKGSMA Kerala", font=find_font("en", True, 35), fill="#E9D5AA")
     else:
         d.text((100, 1500), source_text, font=find_font("en", True, 35), fill="#E9D5AA")
-    d.text((100, 1550), disclaimer, font=small, fill="#C6D0DB")
+    d.text((100, 1545), disclaimer, font=small, fill="#C6D0DB")
     note_font = find_font(lang, False, 22)
     d.text((100, 1590), pawan_note, font=note_font, fill="#ADB9C5")
     d.text((70, 1698), WEBSITE, font=footer_font, fill="#EACF95")
