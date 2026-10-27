@@ -235,7 +235,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     gram_font = find_font("en", False, 24) if lang == "en" else find_font("ml", False, 24)
     rate_font = find_font("en", True, 49)
     change_font = find_font(lang, True, 17 if lang == "ml" else 18)
-    change_amount_font = find_font("en", True, 18)
+    change_amount_font = find_font(lang, True, 18)
     for label, key in labels:
         d.rounded_rectangle((65, y, 1015, y + card_height), radius=28, fill="#182330", outline="#354455", width=2)
         d.rounded_rectangle((65, y, 82, y + card_height), radius=8, fill="#C7A66A")
