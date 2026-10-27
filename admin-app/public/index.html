@@ -20,6 +20,8 @@
 <button class="navbtn" data-page="upload"><span class="ico">↑</span>Upload video</button>
 <button class="navbtn" data-page="github"><span class="ico">⌘</span>GitHub workflows</button>
 <button class="navbtn" data-page="security"><span class="ico">⬡</span>Safety controls</button>
+<button class="navbtn" data-page="history"><span class="ico">▤</span>Upload history</button>
+<button class="navbtn" data-page="audit"><span class="ico">⌕</span>Audit log</button>
 <div class="navlabel">System</div><div class="sidefoot">Swarnam4U admin is separate from the public website. Actions are executed server-side and require configured credentials.</div>
 </aside>
 <main class="main">
@@ -60,6 +62,14 @@
 <div class="pagehead"><div><div class="eyebrow">Risk controls / publishing</div><h1>Safety controls</h1><p class="sub">Control publishing secrets for future GitHub Actions runs.</p></div><span class="badge err">High impact</span></div>
 <div class="panel dangerzone"><div class="panelhead"><h2>Emergency publishing stop</h2><span class="badge err">Confirm before action</span></div><p>Sets <code>YOUTUBE_UPLOAD_KILL_SWITCH=true</code> and <code>YOUTUBE_AUTO_PUBLISH=false</code> using GitHub's encrypted secrets API. Secret values cannot be read back by this app.</p><div class="actions"><button class="btn danger" id="stopPublishing">■ Emergency stop publishing</button><button class="btn good" id="resumePublishing">▶ Resume publishing</button></div><div id="safetyResult" class="notice hidden"></div><div class="notice warn"><b>Important:</b> Resume enables the secrets for future runs. Use only after checking the target channel, schedules, workflow code, and YouTube authorization. If the workflow does not inspect the kill switch, changing this secret alone will not stop it.</div></div>
 <div class="panel" style="margin-top:14px"><div class="panelhead"><h2>Security posture</h2></div><div class="statusrow"><span>Credentials in browser</span><span class="badge ok">No</span></div><div class="statusrow"><span>Google tokens encrypted at rest</span><span class="badge">Requires key + persistent storage</span></div><div class="statusrow"><span>GitHub secret read-back</span><span class="badge ok">Not possible / not attempted</span></div><div class="statusrow"><span>Public website changes</span><span class="badge ok">None from this console</span></div></div>
+</section>
+<section class="page hidden" id="page-history">
+<div class="pagehead"><div><div class="eyebrow">Creator studio / history</div><h1>Upload history</h1><p class="sub">Uploads accepted by YouTube from this admin service.</p></div><span class="badge">Local service log</span></div>
+<div class="panel"><div class="panelhead"><h2>Recent uploads</h2><button class="btn" id="reloadHistory">↻ Reload</button></div><div id="uploadHistory" class="tablewrap"><div class="empty">Loading upload history…</div></div><div class="notice warn">History is stored on the admin service filesystem. On hosts with ephemeral storage, it may be lost during restart unless a persistent disk or database is configured.</div></div>
+</section>
+<section class="page hidden" id="page-audit">
+<div class="pagehead"><div><div class="eyebrow">Security / accountability</div><h1>Audit log</h1><p class="sub">Recent admin actions recorded by the server.</p></div><span class="badge">Local service log</span></div>
+<div class="panel"><div class="panelhead"><h2>Admin events</h2><button class="btn" id="reloadAudit">↻ Reload</button></div><div id="auditTable" class="tablewrap"><div class="empty">Loading audit log…</div></div><div class="notice warn">This first version has a single admin login. Multi-user roles and tamper-resistant centralized audit storage require a database-backed identity system.</div></div>
 </section>
 <div class="footer">SWARNAM4U · NEON COMMAND CENTER · Separate admin service · Do not share this URL or credentials</div>
 </main></div></div>
