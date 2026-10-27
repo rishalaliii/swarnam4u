@@ -75,6 +75,17 @@ class ShortsDesignTests(unittest.TestCase):
             upload_shorts.verify_channel_identity(
                 {"id": "another-channel", "snippet": {"customUrl": "@someoneelse"}}
             )
+        # A channel ID resolved from YouTube's forHandle lookup is authoritative even if customUrl is absent.
+        self.assertEqual(
+            upload_shorts.verify_channel_identity(
+                {"id": "channel-123", "snippet": {}}, "@SWARANAM4U", "channel-123"
+            ),
+            "@swaranam4u",
+        )
+        with self.assertRaisesRegex(RuntimeError, "does not match"):
+            upload_shorts.verify_channel_identity(
+                {"id": "another-channel", "snippet": {}}, "@SWARANAM4U", "channel-123"
+            )
         with self.assertRaisesRegex(RuntimeError, "did not expose a verifiable handle"):
             upload_shorts.verify_channel_identity({"id": "channel-123", "snippet": {}})
 
