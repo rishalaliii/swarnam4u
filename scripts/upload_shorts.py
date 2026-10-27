@@ -156,11 +156,9 @@ def is_duplicate_slot(existing_titles: set[str], candidate_title: str) -> bool:
 def video_description(date: dt.date) -> str:
     """Return the common description used for every English and Malayalam Short."""
     return (
-        f"Kerala gold and silver board rates dated {date:%d %B %Y}.\n"
-        f"Source: AKGSMA Kerala — https://akgsma.com/\n"
-        f"Check out the latest rates via https://{WEBSITE}\n"
-        "Rates are shown per gram. Pawan totals are calculated from the published per-gram rates. "
-        "Published values only; calculated or unavailable rates are not represented as board quotes.\n"
+        f"Kerala gold and silver rates dated {date:%d %B %Y}.\n"
+        f"Latest rates: https://{WEBSITE}\n"
+        "Rates are shown per gram. Pawan totals are calculated from the published per-gram rates.\n"
         "#Shorts #KeralaGoldRate #GoldRate #SilverRate #Swarnam4U"
     )
 
@@ -248,7 +246,10 @@ def main() -> int:
     existing_titles, channel_handle = recent_uploaded_titles(youtube)
     results = []
     for lang in ("en", "ml"):
-        title = video_title(lang, today, slot, primary_change)
+        # Public-now uploads use the actual IST time immediately before each video is uploaded.
+        # Scheduled/private uploads keep the configured slot time.
+        display_time = dt.datetime.now(IST).strftime("%H:%M") if publish_mode == "public_now" else None
+        title = video_title(lang, today, slot, primary_change, display_time=display_time)
         if is_duplicate_slot(existing_titles, title):
             results.append({"language": lang, "title": title, "status": "skipped_duplicate"})
             continue
