@@ -94,6 +94,23 @@ def target_time(slot: str) -> dt.datetime:
     h, minute = SLOT_TIMES[slot]
     return dt.datetime.combine(today, dt.time(h, minute), tzinfo=IST)
 
+def ensure_publish_window(
+    publish_at: dt.datetime,
+    now: dt.datetime | None = None,
+    minimum_lead: dt.timedelta = dt.timedelta(minutes=5),
+) -> None:
+    """Refuse an upload if its scheduled publish time is too close or already passed."""
+    current = now or dt.datetime.now(IST)
+    if publish_at.tzinfo is None or current.tzinfo is None:
+        raise ValueError("Publish time and current time must include timezone information.")
+    remaining = publish_at.astimezone(IST) - current.astimezone(IST)
+    if remaining < minimum_lead:
+        raise RuntimeError(
+            f"Target publishing time {publish_at.astimezone(IST).isoformat()} is less than "
+            f"{minimum_lead.total_seconds() / 60:g} minutes away or has passed; upload refused."
+        )
+
+
 def recent_uploaded_titles(youtube) -> tuple[set[str], str]:
     expected_handle = "@" + normalize_channel_handle(EXPECTED_CHANNEL_HANDLE)
     expected_response = youtube.channels().list(
@@ -193,9 +210,10 @@ def main() -> int:
         print("Preflight has not passed for today; upload refused.", file=sys.stderr)
         return 2
     target = target_time(slot)
-    now = dt.datetime.now(IST)
-    if target - now < dt.timedelta(minutes=5):
-        print(f"Target publishing time {target.isoformat()} is less than five minutes away or has passed; upload refused.", file=sys.stderr)
+    try:
+        ensure_publish_window(target)
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
         return 2
     manifest_path = out_dir / "manifest.json"
     if not manifest_path.exists():
@@ -219,7 +237,16 @@ def main() -> int:
         if is_duplicate_slot(existing_titles, title):
             results.append({"language": lang, "title": title, "status": "skipped_duplicate"})
             continue
-        results.append(upload_one(youtube, videos[lang], lang, today, slot, target, title))
+        # Recheck immediately before each upload: the first transfer or an API retry can take time.
+        try:
+            ensure_publish_window(target)
+        except RuntimeError as exc:
+            report = {"date": today.isoformat(), "slot": slot, "channel_handle": channel_handle, "results": results,
+                      "blocked_language": lang, "reason": str(exc)}
+            (out_dir / "upload-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            print(json.dumps(report, ensure_ascii=False, indent=2), file=sys.stderr)
+            return 2
+        results.append(upload_one(youtube, videos[lang], lang, date=today, slot=slot, publish_at=target, title=title))
     report = {"date": today.isoformat(), "slot": slot, "channel_handle": channel_handle, "results": results}
     (out_dir / "upload-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
