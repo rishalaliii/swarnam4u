@@ -128,8 +128,21 @@ def spoken_change_text(comparison: dict, lang: str) -> str:
     return "The previous-day comparison is unavailable."
 
 
-def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
-    """Localized, hashtagged YouTube title with date, time and previous-day movement."""
+def video_title(
+    lang: str,
+    date: dt.date,
+    slot: str,
+    comparison: dict,
+    display_time: str | None = None,
+) -> str:
+    """Localized title; optionally use the actual upload time instead of the scheduled slot."""
+    if display_time is not None:
+        try:
+            parsed_time = dt.datetime.strptime(display_time, "%H:%M").time()
+        except ValueError as exc:
+            raise ValueError("display_time must use 24-hour HH:MM format.") from exc
+        display_time = parsed_time.strftime("%H:%M")
+    effective_time = display_time or SLOT_TIMES[slot]
     if slot not in SLOT_TIMES:
         raise ValueError(f"Unknown publish slot: {slot}")
     if lang not in ("en", "ml"):
@@ -138,7 +151,7 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
 
     # Keep English titles exactly as before; localize the human-readable parts only for Malayalam.
     if lang == "en":
-        time_text = f"{SLOT_TIMES[slot]} IST"
+        time_text = f"{effective_time} IST"
         date_text = date.strftime("%d %b %Y")
         movement = title_change_text(comparison, "en")
         title = f"Today's Gold Rate | {date_text} | {time_text} | {movement} {hashtags}"
@@ -151,11 +164,11 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
 
     date_text = malayalam_date_text(date)
     local_times = {
-        "morning": f"രാവിലെ {SLOT_TIMES[slot]}",
-        "midday": f"ഉച്ചയ്ക്ക് {SLOT_TIMES[slot]}",
-        "evening": f"വൈകിട്ട് {SLOT_TIMES[slot]}",
+        "morning": f"രാവിലെ {effective_time}",
+        "midday": f"ഉച്ചയ്ക്ക് {effective_time}",
+        "evening": f"വൈകിട്ട് {effective_time}",
     }
-    time_options = [local_times[slot], SLOT_TIMES[slot]]
+    time_options = [local_times[slot], effective_time]
     movement_options = [
         title_change_text(comparison, "ml"),
         title_change_text(comparison, "ml", compact=True),
