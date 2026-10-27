@@ -40,15 +40,28 @@ def normalize_channel_handle(value: str | None) -> str:
         value = urlparse(value if "://" in value else "https://" + value).path.rstrip("/").split("/")[-1]
     return value.strip().lstrip("@").casefold()
 
-def verify_channel_identity(channel: dict, expected_handle: str = EXPECTED_CHANNEL_HANDLE) -> str:
-    """Fail closed if OAuth credentials identify anything other than the intended channel."""
+def verify_channel_identity(
+    channel: dict,
+    expected_handle: str = EXPECTED_CHANNEL_HANDLE,
+    expected_channel_id: str | None = None,
+) -> str:
+    """Fail closed if OAuth credentials identify anything other than the expected handle/ID."""
     if not isinstance(channel, dict) or not channel.get("id"):
         raise RuntimeError("YouTube returned no valid channel identity.")
     snippet = channel.get("snippet") or {}
     actual = snippet.get("customUrl") or snippet.get("handle") or ""
+    expected = normalize_channel_handle(expected_handle)
+    if expected_channel_id:
+        if channel["id"] != expected_channel_id:
+            actual_label = "@" + normalize_channel_handle(actual) if normalize_channel_handle(actual) else channel["id"]
+            raise RuntimeError(
+                f"Authorized YouTube channel {actual_label} does not match {expected_handle}; upload refused."
+            )
+        # The API resolved expected_handle to this exact channel ID, so the ID match is authoritative.
+        return "@" + expected
     if not normalize_channel_handle(actual):
         raise RuntimeError("The authorized YouTube channel did not expose a verifiable handle; upload refused. Verify the OAuth account and channel handle before retrying.")
-    if normalize_channel_handle(actual) != normalize_channel_handle(expected_handle):
+    if normalize_channel_handle(actual) != expected:
         raise RuntimeError(
             f"Authorized YouTube channel handle is @{normalize_channel_handle(actual)}, "
             f"but this project is configured for {expected_handle}; upload refused."
@@ -81,11 +94,19 @@ def target_time(slot: str) -> dt.datetime:
     return dt.datetime.combine(today, dt.time(h, minute), tzinfo=IST)
 
 def recent_uploaded_titles(youtube) -> tuple[set[str], str]:
+    expected_handle = "@" + normalize_channel_handle(EXPECTED_CHANNEL_HANDLE)
+    expected_response = youtube.channels().list(
+        part="id,snippet", forHandle=expected_handle, maxResults=1
+    ).execute()
+    expected_items = expected_response.get("items", [])
+    if not expected_items:
+        raise RuntimeError(f"YouTube could not resolve the configured channel handle {expected_handle}; upload refused.")
+    expected_channel_id = expected_items[0].get("id")
     channels = youtube.channels().list(part="snippet,contentDetails", mine=True, maxResults=1).execute()
     items = channels.get("items", [])
     if not items:
         raise RuntimeError("No YouTube channel is available for the authorized account.")
-    channel_handle = verify_channel_identity(items[0])
+    channel_handle = verify_channel_identity(items[0], expected_handle, expected_channel_id)
     playlist = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
     result = youtube.playlistItems().list(
         part="snippet,contentDetails", playlistId=playlist, maxResults=50
