@@ -1,15 +1,16 @@
 # Swarnam4U
-Static Kerala gold / silver / platinum rate site (AKGSMA board rates), hosted on GitHub Pages.
-swarnam4u.onrender.com
+Kerala gold, silver and platinum rate website, with a browser-based rate calculator, historical trends and a daily poster generator.
+Public site: https://swarnam4u.onrender.com
+
+The repository's GitHub Pages setting is not enabled; the public site is served by its separate hosting configuration.
 
 Pages: `index.html` (current rates), `trends.html`, `calculator.html`, `about.html`, `contact.html`.
 Shared files: `assets/site.css`, `assets/site.js`. Data: `data/rates.json`.
 
 ## How rates update (no manual step)
-`.github/workflows/update.yml` runs `scripts/fetch_rates.py` every 15 minutes, commits
-`data/rates.json` only when it changed, and Pages republishes it. Overlapping runs are blocked (`concurrency`).
+`.github/workflows/update.yml` runs `scripts/fetch_rates.py` every 10 minutes (GitHub may delay scheduled starts). It writes the rates snapshot atomically and is intended to commit only meaningful rate/history/spot changes, avoiding timestamp-only redeploys. Overlapping runs are blocked (`concurrency`).
 If a fetch fails, the previous file is kept and the run is marked failed (GitHub emails the repo owner).
-Only real fetched values are stored; history is one value per day and starts empty.
+Only validated fetched values and explicitly labelled calculations are stored. History contains actual observed daily snapshots; gaps are not filled with invented values.
 
 ## How rates are fetched (same method as the Asian Jewellery project)
 Fetching runs **server-side**, never relying on the visitor's browser:
@@ -17,17 +18,17 @@ Fetching runs **server-side**, never relying on the visitor's browser:
 2. **24K and 14K are calculated** from the 22K board rate (22K x 24/22, 22K x 585/916) and labelled "calculated". AKGSMA publishes no 24K, 14K or platinum.
 3. **Platinum** has no AKGSMA rate: it comes from Goodreturns/BankBazaar pages and carries an amber tag.
 4. **Browser:** on open it shows the last known rates instantly and re-checks live (Worker API if configured, else AKGSMA/LiveGold via public relays), replacing them as soon as newer ones arrive. The Refresh button repeats this.
-5. `data/rates.json` ships pre-filled with the 21 Oct 2026 AKGSMA board rates, so the site is never empty.
+5. `data/rates.json` keeps the last saved snapshot so the site can show known rates while a new refresh is attempted. Each rate's own date/source should be checked, not inferred from the file timestamp alone.
 
 ## Fastest fetch (optional)
 Deploy `worker/rates-worker.js` (adds a `?api=rates` JSON endpoint that parses AKGSMA server-side) to Cloudflare Workers and set `WORKER` in `assets/site.js` (see `worker/README.md`).
 
 ## One-time setup
-1. Repo > Settings > Pages: deploy from the `main` branch (root).
+1. Confirm the separate host serving `https://swarnam4u.onrender.com` deploys the `main` branch and publishes the site files from the repository root.
 2. Repo > Settings > Actions > General > Workflow permissions: **Read and write**.
 3. Run `python scripts/fetch_rates.py --check` locally (or Actions > "Update rates" > Run workflow) and compare the
    printed values with akgsma.com. Adjust `PATTERNS` in the script if they differ.
-4. Confirm akgsma.com allows automated use (the script already honours robots.txt).
+4. Confirm akgsma.com permits automated access. The fetcher checks `robots.txt` before requesting the primary AKGSMA page and uses fallback sources when needed.
 
 Scheduled workflows on public repos are paused after 60 days without repo activity; re-enable under Actions if that happens.
 Local preview: `python -m http.server 8000`.
