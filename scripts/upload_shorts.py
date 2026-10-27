@@ -60,17 +60,22 @@ def recent_uploaded_titles(youtube) -> set[str]:
     ).execute()
     return {row.get("snippet", {}).get("title", "") for row in result.get("items", [])}
 
+def video_description(date: dt.date) -> str:
+    """Return the common description used for every English and Malayalam Short."""
+    return (
+        f"Kerala gold and silver board rates dated {date:%d %B %Y}.\n"
+        f"Source: AKGSMA Kerala — https://akgsma.com/\n"
+        f"Check out the latest rates via https://{WEBSITE}\n"
+        "Rates are shown per gram. Pawan totals are calculated from the published per-gram rates. "
+        "Published values only; calculated or unavailable rates are not represented as board quotes.\n"
+        "#Shorts #KeralaGoldRate #GoldRate #SilverRate #Swarnam4U"
+    )
+
 def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime) -> dict:
     language_title = "English" if lang == "en" else "Malayalam"
     slot_title = {"morning": "Morning", "midday": "Midday", "evening": "Evening"}[slot]
     title = f"Kerala Gold & Silver Rates | {date:%d %b %Y} | {slot_title} | {language_title} #Shorts"
-    description = (
-        f"Kerala gold and silver board rates dated {date:%d %B %Y}.\n"
-        f"Source: AKGSMA Kerala — https://akgsma.com/\n"
-        f"Website: https://{WEBSITE}\n"
-        "Rates are shown per gram. Published values only; calculated or unavailable rates are not represented as board quotes.\n"
-        "#Shorts #KeralaGoldRate #GoldRate #SilverRate #Swarnam4U"
-    )
+    description = video_description(date)
     body = {
         "snippet": {
             "title": title[:100],
