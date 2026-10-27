@@ -43,7 +43,8 @@ permissions:
 concurrency:
   # Serialize the same scheduled/manual slot, but never let a push-only artifact build
   # block a future scheduled publication if a runner stalls.
-  group: swarnam4u-shorts-build-${{ github.event.schedule || inputs.slot || github.run_id }}
+  # Map scheduled and manual runs to the same slot lock; push-only review builds keep a unique group.
+  group: swarnam4u-shorts-build-${{ inputs.slot || (github.event.schedule == '40 4 * * *' && 'morning') || (github.event.schedule == '15 7 * * *' && 'midday') || (github.event.schedule == '15 11 * * *' && 'evening') || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -107,6 +108,7 @@ jobs:
           SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
           YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_EXPECTED_CHANNEL_HANDLE: ${{ vars.YOUTUBE_EXPECTED_CHANNEL_HANDLE || '@SWARANAM4U' }}
         run: python scripts/upload_shorts.py
       - name: Upload generated files and report
         if: always()
