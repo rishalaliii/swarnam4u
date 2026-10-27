@@ -179,7 +179,12 @@ def spot_reference():
 def board_rates(got_log):
     """Try each board source in order; use the freshest-dated valid result (AKGSMA wins ties), as Asian does."""
     res = []
+    akgsma_allowed = allowed_by_robots()
+    if not akgsma_allowed:
+        got_log.append("AKGSMA skipped because robots.txt disallows this user-agent")
     for name, url, parser, must in BOARD_SOURCES:
+        if name == "AKGSMA Kerala" and not akgsma_allowed:
+            continue
         try:
             d = validate(parser(get_text(url, must))); d["name"] = name; res.append(d); got_log.append("%s ok (%s)" % (name, d["date"]))
         except Exception as e:
@@ -195,6 +200,10 @@ def board_rates(got_log):
 def main():
     check = "--check" in sys.argv
     data = json.loads(OUT.read_text(encoding="utf-8"))
+    # Compare rate/history metadata, not the volatile wall-clock timestamp. This prevents a
+    # no-change 10-minute poll from creating a commit and triggering unnecessary redeploys.
+    tracked_keys = ("gold", "silver", "platinum", "history", "series", "history_basis", "source", "source_url", "currency", "unit")
+    tracked_before = json.dumps({key: data.get(key) for key in tracked_keys}, sort_keys=True, ensure_ascii=False)
     now = datetime.datetime.now(IST)
     today = now.date().isoformat()
     got = {}                                     # (group,label) -> (value, source, rate_date)
@@ -202,8 +211,9 @@ def main():
 
     def ok_jump(grp, label, val):
         old = data[grp].get(label)
-        if old and old.get("today") and abs(val - old["today"]) / old["today"] > GOLD_MAX_JUMP:
-            print("  skip %s: %s is >%d%% from stored %s" % (label, val, GOLD_MAX_JUMP * 100, old["today"])); return False
+        threshold = GOLD_MAX_JUMP if grp == "gold" else MAX_JUMP
+        if old and old.get("today") and abs(val - old["today"]) / old["today"] > threshold:
+            print("  skip %s: %s is >%d%% from stored %s" % (label, val, threshold * 100, old["today"])); return False
         return True
 
     gold, sil = board_rates(log)
@@ -265,13 +275,27 @@ def main():
             "source": source,
         }
         print("  %-16s %-10s %s (%s)" % (label, val, source, rdate))
-    spot = spot_reference()
-    if spot:
-        data["spot"] = spot
     if check:
         print("Check only: nothing written"); return
 
-    data["updated"] = now.isoformat(timespec="seconds")
+    # Spot reference is auxiliary and volatile; refresh hourly, not on every 10-minute rates poll.
+    # Keep the actual observation timestamp separate from the daily board rate timestamp.
+    last_spot_stamp = (data.get("spot") or {}).get("updated_at")
+    refresh_spot = not last_spot_stamp
+    if last_spot_stamp:
+        try:
+            last_spot = datetime.datetime.fromisoformat(last_spot_stamp)
+            if last_spot.tzinfo is None:
+                last_spot = last_spot.replace(tzinfo=IST)
+            refresh_spot = now - last_spot >= datetime.timedelta(hours=1)
+        except (TypeError, ValueError):
+            refresh_spot = True
+    if refresh_spot:
+        spot = spot_reference()
+        if spot:
+            spot["updated_at"] = now.isoformat(timespec="seconds")
+            data["spot"] = spot
+
     data["source"], data["source_url"], data["currency"], data["unit"] = "AKGSMA Kerala", URL, "INR", "gram"
     data["history_basis"] = HISTORY_LABEL
     for grp, label in HISTORY_LABEL.items():
@@ -288,6 +312,9 @@ def main():
             continue
         sr = ser.setdefault(sid, {"label": name, "metal": grp, "group_key": label, "note": note, "history": []})
         sr["history"] = sorted([r for r in sr["history"] if r["date"] != entry["date"]] + [{"date": entry["date"], "rate": entry["today"]}], key=lambda r: r["date"])[-3000:]
+    tracked_after = json.dumps({key: data.get(key) for key in tracked_keys}, sort_keys=True, ensure_ascii=False)
+    if tracked_after != tracked_before or not data.get("updated"):
+        data["updated"] = now.isoformat(timespec="seconds")
     tmp = OUT.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
     tmp.replace(OUT)
