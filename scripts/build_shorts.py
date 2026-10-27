@@ -183,7 +183,7 @@ def wrap_to_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeType
         lines.append(line)
     return lines
 
-def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: dict[str, dict], slot: str, png: pathlib.Path) -> None:
+def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: dict[str, dict], slot: str, png: pathlib.Path, display_time: str | None = None) -> None:
     im = Image.new("RGB", (WIDTH, HEIGHT), "#101722")
     d = ImageDraw.Draw(im)
     # Restrained dark navy, warm ivory, and antique-gold palette.
@@ -223,7 +223,9 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
     date_label = date.strftime("%d %B %Y") if lang == "en" else malayalam_date_text(date)
     d.text((100, 407), date_label, font=find_font(lang, True, 42), fill="#F6EEDD")
-    slot_clock = f"{SLOT_TIMES[slot]} IST"
+    # Manual public-now runs stamp the actual Kerala time into the video; scheduled
+    # runs retain the configured slot time.
+    slot_clock = f"{display_time or SLOT_TIMES[slot]} IST"
     clock_font = find_font("en", True, 38)
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
     d.text((980 - clock_width, 410), slot_clock, font=clock_font, fill="#D8BC83")
@@ -355,11 +357,16 @@ async def main_async(slot: str) -> int:
     date, values, comparisons = board_values()
     out_dir = OUT / f"{date.isoformat()}-{slot}"
     out_dir.mkdir(parents=True, exist_ok=True)
+    publish_mode = os.environ.get("SHORTS_PUBLISH_MODE", "scheduled_private").strip().lower()
+    if publish_mode not in {"scheduled_private", "public_now"}:
+        raise ValueError("SHORTS_PUBLISH_MODE must be scheduled_private or public_now.")
+    display_time = dt.datetime.now(IST).strftime("%H:%M") if publish_mode == "public_now" else SLOT_TIMES[slot]
     primary_change = comparisons["22K · 916"]
     manifest = {
         "date": date.isoformat(),
         "slot": slot,
-        "publish_time_ist": SLOT_TIMES[slot],
+        "publish_time_ist": display_time,
+        "publish_mode": publish_mode,
         "website": WEBSITE,
         "comparisons": comparisons,
         "videos": [],
@@ -369,7 +376,7 @@ async def main_async(slot: str) -> int:
         stem = video_stem(lang, date, slot, primary_change)
         png, mp3, mp4 = out_dir / f"{stem}.png", out_dir / f"{stem}.mp3", out_dir / f"{stem}.mp4"
         narration = script_text(lang, date, values, comparisons)
-        draw_card(lang, date, values, comparisons, slot, png)
+        draw_card(lang, date, values, comparisons, slot, png, display_time=display_time)
         await make_voice(narration, VOICES[lang], mp3)
         duration = probe_duration(mp3)
         if duration > 55:
