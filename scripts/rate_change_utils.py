@@ -81,9 +81,9 @@ def title_change_text(comparison: dict, lang: str, compact: bool = False) -> str
     amount = rate_change_amount(comparison)
     if lang == "ml":
         if direction == "up":
-            return f"{amount}/g വർധന" if compact else f"ഇന്നലെയേക്കാൾ {amount}/g വർധന"
+            return f"{amount}/ഗ്രാം വർധന" if compact else f"ഇന്നലെയേക്കാൾ {amount}/ഗ്രാം വർധന"
         if direction == "down":
-            return f"{amount}/g കുറവ്" if compact else f"ഇന്നലെയേക്കാൾ {amount}/g കുറവ്"
+            return f"{amount}/ഗ്രാം കുറവ്" if compact else f"ഇന്നലെയേക്കാൾ {amount}/ഗ്രാം കുറവ്"
         if direction == "no_change":
             return "മാറ്റമില്ല" if compact else "ഇന്നലെയേക്കാൾ മാറ്റമില്ല"
         return "മാറ്റം ലഭ്യമല്ല" if compact else "മുൻദിവസത്തെ നിരക്ക് ലഭ്യമല്ല"
@@ -123,19 +123,46 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
         raise ValueError(f"Unknown publish slot: {slot}")
     if lang not in ("en", "ml"):
         raise ValueError(f"Unsupported language: {lang}")
-    time_text = f"{SLOT_TIMES[slot]} IST"
-    date_text = date.strftime("%d %b %Y")
     hashtags = "#KeralaGoldRate #Shorts"
-    movement = title_change_text(comparison, lang)
-    prefix = "ഇന്നത്തെ സ്വർണ്ണവില" if lang == "ml" else "Today's Gold Rate"
-    title = f"{prefix} | {date_text} | {time_text} | {movement} {hashtags}"
-    # Keep every required field and hashtag; compact only the movement phrase if near YouTube's limit.
-    if len(title) > 100:
-        movement = title_change_text(comparison, lang, compact=True)
-        title = f"{prefix} | {date_text} | {time_text} | {movement} {hashtags}"
-    if len(title) > 100:
-        raise ValueError(f"Generated title exceeds YouTube's 100-character limit ({len(title)} characters).")
-    return title
+
+    # Keep English titles exactly as before; localize the human-readable parts only for Malayalam.
+    if lang == "en":
+        time_text = f"{SLOT_TIMES[slot]} IST"
+        date_text = date.strftime("%d %b %Y")
+        movement = title_change_text(comparison, "en")
+        title = f"Today's Gold Rate | {date_text} | {time_text} | {movement} {hashtags}"
+        if len(title) > 100:
+            movement = title_change_text(comparison, "en", compact=True)
+            title = f"Today's Gold Rate | {date_text} | {time_text} | {movement} {hashtags}"
+        if len(title) > 100:
+            raise ValueError(f"Generated English title exceeds YouTube's 100-character limit ({len(title)} characters).")
+        return title
+
+    malayalam_months = {
+        1: "ജനുവരി", 2: "ഫെബ്രുവരി", 3: "മാർച്ച്", 4: "ഏപ്രിൽ",
+        5: "മേയ്", 6: "ജൂൺ", 7: "ജൂലൈ", 8: "ഓഗസ്റ്റ്",
+        9: "സെപ്റ്റംബർ", 10: "ഒക്ടോബർ", 11: "നവംബർ", 12: "ഡിസംബർ",
+    }
+    date_text = f"{date.day} {malayalam_months[date.month]} {date.year}"
+    local_times = {
+        "morning": f"രാവിലെ {SLOT_TIMES[slot]}",
+        "midday": f"ഉച്ചയ്ക്ക് {SLOT_TIMES[slot]}",
+        "evening": f"വൈകിട്ട് {SLOT_TIMES[slot]}",
+    }
+    time_options = [local_times[slot], SLOT_TIMES[slot]]
+    movement_options = [
+        title_change_text(comparison, "ml"),
+        title_change_text(comparison, "ml", compact=True),
+    ]
+    prefix = "ഇന്നത്തെ സ്വർണ്ണവില"
+    # Prefer full Malayalam time and yesterday comparison; shorten only as needed for YouTube's limit.
+    for movement in movement_options:
+        for time_text in time_options:
+            title = f"{prefix} | {date_text} | {time_text} | {movement} {hashtags}"
+            if len(title) <= 100:
+                return title
+    raise ValueError("Generated Malayalam title exceeds YouTube's 100-character limit.");
+
 
 
 def video_stem(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
