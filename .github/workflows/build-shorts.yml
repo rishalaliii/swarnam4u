@@ -41,7 +41,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: swarnam4u-shorts-build
+  # Serialize the same scheduled/manual slot, but never let a push-only artifact build
+  # block a future scheduled publication if a runner stalls.
+  group: swarnam4u-shorts-build-${{ github.event.schedule || inputs.slot || github.run_id }}
   cancel-in-progress: false
 
 jobs:
