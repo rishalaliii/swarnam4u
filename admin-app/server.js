@@ -49,6 +49,13 @@ const upload = multer({
   }
 });
 
+function appendLocalLog(fileName, event) {
+  const file = path.join(DATA, fileName);
+  let rows = [];
+  try { rows = JSON.parse(fs.readFileSync(file, "utf8")); if (!Array.isArray(rows)) rows = []; } catch {}
+  rows.unshift({ at: new Date().toISOString(), ...event });
+  fs.writeFileSync(file, JSON.stringify(rows.slice(0, 500), null, 2), { mode: 0o600 });
+}
 function timingSafeString(a, b) {
   const aa = Buffer.from(String(a || ""));
   const bb = Buffer.from(String(b || ""));
@@ -143,6 +150,7 @@ app.post("/api/login", loginLimiter, sameOrigin, (req, res) => {
     if (err) return res.status(500).json({ error: "Could not create secure session." });
     req.session.authenticated = true;
     req.session.username = process.env.ADMIN_USERNAME;
+    try { appendLocalLog("audit.json", { actor: req.session.username, action: "login_success" }); } catch (e) { console.error("Audit log write failed:", e.message); }
     req.session.save(e => e ? res.status(500).json({ error: "Could not save session." }) : res.json({ ok: true }));
   });
 });
@@ -150,6 +158,15 @@ app.post("/api/logout", sameOrigin, (req, res) => req.session.destroy(() => {
   res.clearCookie("swarnam_admin", { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
   res.json({ ok: true });
 }));
+
+app.get("/api/audit", requireAuth, (_req, res) => {
+  try { const rows = JSON.parse(fs.readFileSync(path.join(DATA, "audit.json"), "utf8")); res.json({ events: Array.isArray(rows) ? rows.slice(0, 100) : [] }); }
+  catch { res.json({ events: [] }); }
+});
+app.get("/api/upload-history", requireAuth, (_req, res) => {
+  try { const rows = JSON.parse(fs.readFileSync(path.join(DATA, "upload-history.json"), "utf8")); res.json({ uploads: Array.isArray(rows) ? rows.slice(0, 100) : [] }); }
+  catch { res.json({ uploads: [] }); }
+});
 
 app.get("/api/dashboard", requireAuth, async (_req, res) => {
   const status = { github: false, youtube: false, rates: null, workflows: [], recentRuns: [], warnings: [] };
@@ -194,6 +211,7 @@ app.post("/api/github/dispatch", requireAuth, sameOrigin, async (req, res) => {
     const data = await gh("/repos/" + c.owner + "/" + c.repo + "/actions/workflows?per_page=100");
     const wf = (data.workflows || []).find(w => w.path === file && w.state === "active");
     if (!wf) return res.status(404).json({ error: "Allow-listed active workflow not found." });
+    appendLocalLog("audit.json", { actor: req.session.username, action: "workflow_dispatch_requested", workflow: file });
     await gh("/repos/" + c.owner + "/" + c.repo + "/actions/workflows/" + wf.id + "/dispatches", {
       method: "POST", body: JSON.stringify({ ref: String(req.body?.ref || "main"), inputs: req.body?.inputs || {} })
     });
@@ -216,10 +234,12 @@ app.post("/api/github/publishing", requireAuth, sameOrigin, async (req, res) => 
   try {
     if (mode === "stop") {
       await setGithubSecret("YOUTUBE_UPLOAD_KILL_SWITCH", "true");
+      appendLocalLog("audit.json", { actor: req.session.username, action: "publishing_emergency_stop_requested" });
       await setGithubSecret("YOUTUBE_AUTO_PUBLISH", "false");
       return res.json({ ok: true, message: "Kill-switch secret set to true and auto-publish set to false. This affects future runs; it cannot cancel a job already uploading." });
     }
     await setGithubSecret("YOUTUBE_UPLOAD_KILL_SWITCH", "false");
+    appendLocalLog("audit.json", { actor: req.session.username, action: "publishing_resume_requested" });
     await setGithubSecret("YOUTUBE_AUTO_PUBLISH", "true");
     res.json({ ok: true, message: "Publishing secrets enabled for future runs. Confirm the workflow checks the kill switch and expected channel before upload." });
   } catch (e) { res.status(502).json({ error: e.message }); }
@@ -275,6 +295,7 @@ app.post("/api/youtube/upload", requireAuth, sameOrigin, upload.single("video"),
       },
       media: { body: fs.createReadStream(f.path) }
     });
+    try { appendLocalLog("upload-history.json", { actor: req.session.username, title, videoId: result.data.id, url: result.data.id ? "https://www.youtube.com/watch?v=" + result.data.id : null, privacyStatus, language, status: "accepted" }); appendLocalLog("audit.json", { actor: req.session.username, action: "youtube_upload_accepted", videoId: result.data.id, privacyStatus }); } catch (e) { console.error("Upload history write failed:", e.message); }
     res.json({ ok: true, videoId: result.data.id, url: result.data.id ? "https://www.youtube.com/watch?v=" + result.data.id : null, privacyStatus, message: "Upload accepted by YouTube. Verify processing and visibility in YouTube Studio." });
   } catch (e) {
     res.status(502).json({ error: e.message || "YouTube upload failed." });
