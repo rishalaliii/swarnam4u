@@ -89,6 +89,18 @@ class ShortsDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "did not expose a verifiable handle"):
             upload_shorts.verify_channel_identity({"id": "channel-123", "snippet": {}})
 
+    def test_upload_dedupes_slot_even_if_rate_change_title_changes(self):
+        old_title = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | വൈകിട്ട് 17:00 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
+        changed_title = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 17:00 | ഇന്നലെയേക്കാൾ ₹100/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
+        english_title = "Today's Gold Rate | 27 Oct 2026 | 17:00 IST | UP ₹100/g vs Yesterday #KeralaGoldRate #Shorts"
+        self.assertEqual(
+            upload_shorts.title_slot_identity(old_title),
+            upload_shorts.title_slot_identity(changed_title),
+        )
+        self.assertTrue(upload_shorts.is_duplicate_slot({old_title}, changed_title))
+        self.assertFalse(upload_shorts.is_duplicate_slot({old_title}, english_title))
+        self.assertFalse(upload_shorts.is_duplicate_slot({"unrelated announcement"}, changed_title))
+
     def test_day_over_day_comparison_up_down_same_and_unavailable(self):
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["direction"], "up")
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["change"], 50)

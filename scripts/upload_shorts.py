@@ -9,6 +9,7 @@ import datetime as dt
 import json
 import os
 import pathlib
+import re
 import sys
 from zoneinfo import ZoneInfo
 
@@ -114,6 +115,27 @@ def recent_uploaded_titles(youtube) -> tuple[set[str], str]:
     titles = {row.get("snippet", {}).get("title", "") for row in result.get("items", [])}
     return titles, channel_handle
 
+def title_slot_identity(title: str) -> tuple[str, str, str] | None:
+    """Extract stable language/date/slot identity, independent of rate-movement wording."""
+    parts = title.split(" | ")
+    if len(parts) < 3:
+        return None
+    match = re.search(r"(?<![0-9])([0-9]{2}:[0-9]{2})(?![0-9])", parts[2])
+    if not match:
+        return None
+    return parts[0], parts[1], match.group(1)
+
+
+def is_duplicate_slot(existing_titles: set[str], candidate_title: str) -> bool:
+    """Prevent a rerun from duplicating the same language/date/time when rates change."""
+    if candidate_title in existing_titles:
+        return True
+    candidate_identity = title_slot_identity(candidate_title)
+    if candidate_identity is None:
+        return False
+    return any(title_slot_identity(existing) == candidate_identity for existing in existing_titles)
+
+
 def video_description(date: dt.date) -> str:
     """Return the common description used for every English and Malayalam Short."""
     return (
@@ -194,7 +216,7 @@ def main() -> int:
     results = []
     for lang in ("en", "ml"):
         title = video_title(lang, today, slot, primary_change)
-        if title in existing_titles:
+        if is_duplicate_slot(existing_titles, title):
             results.append({"language": lang, "title": title, "status": "skipped_duplicate"})
             continue
         results.append(upload_one(youtube, videos[lang], lang, today, slot, target, title))
