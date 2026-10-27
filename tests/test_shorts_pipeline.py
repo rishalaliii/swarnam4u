@@ -39,6 +39,7 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("₹10,705", text)
         self.assertIn("₹220", text)
         self.assertIn("ഒരു പവൻ", text)
+        self.assertIn("എട്ട് ഗ്രാം", text)
         self.assertIn("₹1,04,680", text)
         self.assertIn("₹85,640", text)
 

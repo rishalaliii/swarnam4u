@@ -109,6 +109,7 @@ def board_values() -> tuple[dt.date, dict[str, float]]:
     return board_date, values
 
 def script_text(lang: str, date: dt.date, values: dict[str, float]) -> str:
+    """Keep narration concise while preserving per-gram and calculated 8g pawan prices."""
     date_en = date.strftime("%d %B %Y")
     v22 = inr(values["22K · 916"])
     v18 = inr(values["18K · 750"])
@@ -117,26 +118,22 @@ def script_text(lang: str, date: dt.date, values: dict[str, float]) -> str:
     v18_pawan = inr(values["18K · 750"] * 8)
     if lang == "en":
         return (
-            f"Here is the Kerala gold and silver rate update for {date_en}. "
-            f"Twenty-two carat gold, nine-one-six purity, is {v22} per gram. "
-            f"One pawan, equal to eight grams, is {v22_pawan} for twenty-two carat gold. "
-            f"Eighteen carat gold is {v18} per gram. "
-            f"One pawan, equal to eight grams, is {v18_pawan} for eighteen carat gold. "
-            f"Silver, nine-nine-nine purity, is {silver} per gram. "
-            f"The pawan totals are calculated from the published per-gram rates. "
-            f"These are the AKGSMA board rates dated {date_en}. "
-            f"For updates, visit {WEBSITE}."
+            f"AKGSMA Kerala gold and silver rates for {date_en}. "
+            f"Twenty-two carat 916 gold: {v22} per gram. "
+            f"One pawan, equal to eight grams, is {v22_pawan}. "
+            f"Eighteen carat 750 gold: {v18} per gram; one pawan is {v18_pawan}. "
+            f"999 silver: {silver} per gram. "
+            f"Pawan amounts are calculated from per-gram rates. "
+            f"Visit {WEBSITE}."
         )
     return (
-        f"ഇന്നത്തെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. തീയതി {date.day} {date.strftime('%B')} {date.year}. "
-        f"22 കാരറ്റ്, 916 പരിശുദ്ധിയുള്ള സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
-        f"22 കാരറ്റ് സ്വർണ്ണത്തിന്റെ ഒരു പവൻ, അതായത് എട്ട് ഗ്രാം, {v22_pawan}. "
-        f"18 കാരറ്റ് സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}. "
-        f"18 കാരറ്റ് സ്വർണ്ണത്തിന്റെ ഒരു പവൻ, അതായത് എട്ട് ഗ്രാം, {v18_pawan}. "
-        f"വെള്ളിയുടെ 999 പരിശുദ്ധിയുള്ള നിരക്ക് ഒരു ഗ്രാമിന് {silver}. "
+        f"{date.day} {date.strftime('%B')} തീയതിയിലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
+        f"22 കാരറ്റ് 916 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
+        f"എട്ട് ഗ്രാം, ഒരു പവൻ {v22_pawan}. "
+        f"18 കാരറ്റ് 750 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}; ഒരു പവൻ {v18_pawan}. "
+        f"999 വെള്ളി ഒരു ഗ്രാമിന് {silver}. "
         f"പവൻ തുക ഗ്രാമിന്റെ നിരക്കിൽ നിന്ന് കണക്കാക്കിയതാണ്. "
-        f"ഇവ {date_en} തീയതിയിലെ എ കെ ജി എസ് എം എ ബോർഡ് പ്രസിദ്ധീകരിച്ച നിരക്കുകളാണ്. "
-        f"കൂടുതൽ വിവരങ്ങൾക്ക് {WEBSITE} സന്ദർശിക്കുക."
+        f"{WEBSITE} സന്ദർശിക്കുക."
     )
 
 def wrap_to_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
@@ -241,7 +238,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     im.save(png, "PNG", optimize=True)
 
 async def make_voice(text: str, voice: str, target: pathlib.Path) -> None:
-    communicate = edge_tts.Communicate(text=text, voice=voice, rate="-4%", volume="+0%")
+    communicate = edge_tts.Communicate(text=text, voice=voice, rate="+2%", volume="+0%")
     await communicate.save(str(target))
 
 def probe_duration(path: pathlib.Path) -> float:
@@ -283,8 +280,8 @@ async def main_async(slot: str) -> int:
         draw_card(lang, date, values, slot, png)
         await make_voice(text, VOICES[lang], mp3)
         duration = probe_duration(mp3)
-        if duration > 58:
-            raise RuntimeError(f"{lang} narration is {duration:.1f}s; shorten the script before rendering.")
+        if duration > 55:
+            raise RuntimeError(f"{lang} narration is {duration:.1f}s; limit is 55 seconds. Shorten the script before rendering.")
         render_video(png, mp3, mp4, duration)
         manifest["videos"].append({
             "language": lang, "voice": VOICES[lang], "script": text,
