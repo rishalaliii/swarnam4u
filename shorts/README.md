@@ -49,3 +49,10 @@ The publish gate stays disabled until those checks are completed. Do not edit sn
 - 22K, 18K, and silver cards display their own previous-day change where a previous value exists. Narration calls out the main 22K movement.
 - Missing previous values show a comparison-unavailable label; no amount is fabricated. If a previous snapshot is explicitly dated and not the prior calendar date, the comparison is treated as unavailable.
 - The rate updater now preserves `yesterday_date` on refresh so future comparisons can verify the prior snapshot date.
+
+
+## Title hashtags
+- Every generated/uploaded title includes the relevant hashtags `#KeralaGoldRate #Shorts`.
+- Titles preserve the language-specific gold-rate name, full date, 24-hour IST slot time, and previous-day movement.
+- The title builder tests every movement state and enforces YouTube's 100-character maximum without cutting off the hashtags.
+- The hashtags are relevant topic labels, not a guarantee of maximum reach; review audience retention and traffic sources in YouTube Analytics to tune them over time.

@@ -65,14 +65,32 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertEqual(rate_change_utils.compare_rate(220, 220)["direction"], "no_change")
         self.assertEqual(rate_change_utils.compare_rate(220, None)["direction"], "unavailable")
 
-    def test_localized_titles_include_date_time_and_price_movement(self):
+    def test_localized_titles_include_relevant_hashtags_and_daily_price_movement(self):
         change = rate_change_utils.compare_rate(13135, 13085)
         english = rate_change_utils.video_title("en", self.date, "morning", change)
         malayalam = rate_change_utils.video_title("ml", self.date, "morning", change)
-        self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:30 IST | UP ₹50/g vs Yesterday #Shorts")
-        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 Oct 2026 | 10:30 IST | ഇന്നലെയേക്കാൾ ₹50/g വർധിച്ചു #Shorts")
+        self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:30 IST | UP ₹50/g vs Yesterday #KeralaGoldRate #Shorts")
+        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 Oct 2026 | 10:30 IST | ഇന്നലെയേക്കാൾ ₹50/g വർധന #KeralaGoldRate #Shorts")
+        for title in (english, malayalam):
+            self.assertIn("#KeralaGoldRate", title)
+            self.assertIn("#Shorts", title)
+            self.assertLessEqual(len(title), 100)
         self.assertIn("13:00 IST", rate_change_utils.video_title("en", self.date, "midday", change))
         self.assertIn("17:00 IST", rate_change_utils.video_title("ml", self.date, "evening", change))
+
+    def test_all_movement_title_variants_keep_hashtags_and_fit_limit(self):
+        comparisons = [
+            rate_change_utils.compare_rate(13135, 13085),
+            rate_change_utils.compare_rate(10700, 10750),
+            rate_change_utils.compare_rate(220, 220),
+            rate_change_utils.compare_rate(220, None),
+            rate_change_utils.compare_rate(13135, 11135),
+        ]
+        for comparison in comparisons:
+            for lang in ("en", "ml"):
+                title = rate_change_utils.video_title(lang, self.date, "morning", comparison)
+                self.assertLessEqual(len(title), 100, title)
+                self.assertTrue(title.endswith("#KeralaGoldRate #Shorts"), title)
 
     def test_no_change_and_unavailable_titles_do_not_invent_deltas(self):
         same = rate_change_utils.compare_rate(220, 220)

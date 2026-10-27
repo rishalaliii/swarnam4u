@@ -76,24 +76,24 @@ def card_change_label(comparison: dict, lang: str) -> tuple[str, str | None]:
     return labels.get(direction, labels["unavailable"]), amount
 
 
-def title_change_text(comparison: dict, lang: str) -> str:
+def title_change_text(comparison: dict, lang: str, compact: bool = False) -> str:
     direction = comparison.get("direction", "unavailable")
     amount = rate_change_amount(comparison)
     if lang == "ml":
         if direction == "up":
-            return f"ഇന്നലെയേക്കാൾ {amount}/g വർധിച്ചു"
+            return f"{amount}/g വർധന" if compact else f"ഇന്നലെയേക്കാൾ {amount}/g വർധന"
         if direction == "down":
-            return f"ഇന്നലെയേക്കാൾ {amount}/g കുറഞ്ഞു"
+            return f"{amount}/g കുറവ്" if compact else f"ഇന്നലെയേക്കാൾ {amount}/g കുറവ്"
         if direction == "no_change":
-            return "ഇന്നലെയേക്കാൾ മാറ്റമില്ല"
-        return "മുൻദിവസത്തെ നിരക്ക് ലഭ്യമല്ല"
+            return "മാറ്റമില്ല" if compact else "ഇന്നലെയേക്കാൾ മാറ്റമില്ല"
+        return "മാറ്റം ലഭ്യമല്ല" if compact else "മുൻദിവസത്തെ നിരക്ക് ലഭ്യമല്ല"
     if direction == "up":
-        return f"UP {amount}/g vs Yesterday"
+        return f"UP {amount}/g" if compact else f"UP {amount}/g vs Yesterday"
     if direction == "down":
-        return f"DOWN {amount}/g vs Yesterday"
+        return f"DOWN {amount}/g" if compact else f"DOWN {amount}/g vs Yesterday"
     if direction == "no_change":
-        return "No Change vs Yesterday"
-    return "Change Unavailable"
+        return "No change" if compact else "No Change vs Yesterday"
+    return "Change N/A" if compact else "Change Unavailable"
 
 
 def spoken_change_text(comparison: dict, lang: str) -> str:
@@ -118,17 +118,24 @@ def spoken_change_text(comparison: dict, lang: str) -> str:
 
 
 def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
-    """Localized YouTube title using the planned publish time and 22K day-over-day move."""
+    """Localized, hashtagged YouTube title with date, time and previous-day movement."""
     if slot not in SLOT_TIMES:
         raise ValueError(f"Unknown publish slot: {slot}")
+    if lang not in ("en", "ml"):
+        raise ValueError(f"Unsupported language: {lang}")
     time_text = f"{SLOT_TIMES[slot]} IST"
     date_text = date.strftime("%d %b %Y")
+    hashtags = "#KeralaGoldRate #Shorts"
     movement = title_change_text(comparison, lang)
-    if lang == "ml":
-        title = f"ഇന്നത്തെ സ്വർണ്ണവില | {date_text} | {time_text} | {movement} #Shorts"
-    else:
-        title = f"Today's Gold Rate | {date_text} | {time_text} | {movement} #Shorts"
-    return title[:100]
+    prefix = "ഇന്നത്തെ സ്വർണ്ണവില" if lang == "ml" else "Today's Gold Rate"
+    title = f"{prefix} | {date_text} | {time_text} | {movement} {hashtags}"
+    # Keep every required field and hashtag; compact only the movement phrase if near YouTube's limit.
+    if len(title) > 100:
+        movement = title_change_text(comparison, lang, compact=True)
+        title = f"{prefix} | {date_text} | {time_text} | {movement} {hashtags}"
+    if len(title) > 100:
+        raise ValueError(f"Generated title exceeds YouTube's 100-character limit ({len(title)} characters).")
+    return title
 
 
 def video_stem(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
