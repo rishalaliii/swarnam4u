@@ -56,9 +56,9 @@ def rate_change_amount(comparison: dict) -> str | None:
 
 
 def card_change_label(comparison: dict, lang: str) -> tuple[str, str | None]:
-    """Return a short localized status label and optional per-gram change amount."""
+    """Return a short localized status label and a change amount only for up/down moves."""
     direction = comparison.get("direction", "unavailable")
-    amount = rate_change_amount(comparison)
+    amount = rate_change_amount(comparison) if direction in ("up", "down") else None
     if lang == "ml":
         labels = {
             "up": "ഇന്നലെയേക്കാൾ വർധന",
