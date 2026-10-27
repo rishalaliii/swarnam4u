@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import Image, features
-from scripts import build_shorts, shorts_preflight
+from scripts import build_shorts, shorts_preflight, upload_shorts
 
 
 class ShortsDesignTests(unittest.TestCase):
@@ -42,6 +42,14 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("എട്ട് ഗ്രാം", text)
         self.assertIn("₹1,04,680", text)
         self.assertIn("₹85,640", text)
+
+    def test_every_youtube_description_has_latest_rates_call_to_action(self):
+        description = upload_shorts.video_description(self.date)
+        self.assertIn("Check out the latest rates via https://swarnam4u.onrender.com", description)
+        self.assertIn("Source: AKGSMA Kerala", description)
+        self.assertIn("27 October 2026", description)
+        self.assertIn("#Shorts", description)
+        self.assertNotIn("Website: https://swarnam4u.onrender.com", description)
 
     def test_board_parser_reads_published_rates_and_refuses_na_925(self):
         text = (
