@@ -128,7 +128,7 @@ def spoken_change_text(comparison: dict, lang: str) -> str:
     return "The previous-day comparison is unavailable."
 
 
-def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
+def video_title(lang: str, date: dt.date, slot: str, comparison: dict, display_time: str | None = None) -> str:
     """Localized, hashtagged YouTube title with date, time and previous-day movement."""
     if slot not in SLOT_TIMES:
         raise ValueError(f"Unknown publish slot: {slot}")
@@ -138,7 +138,7 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
 
     # Keep English titles exactly as before; localize the human-readable parts only for Malayalam.
     if lang == "en":
-        time_text = f"{SLOT_TIMES[slot]} IST"
+        time_text = f"{display_time or SLOT_TIMES[slot]} IST"
         date_text = date.strftime("%d %b %Y")
         movement = title_change_text(comparison, "en")
         title = f"Today's Gold Rate | {date_text} | {time_text} | {movement} {hashtags}"
@@ -151,11 +151,11 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
 
     date_text = malayalam_date_text(date)
     local_times = {
-        "morning": f"രാവിലെ {SLOT_TIMES[slot]}",
-        "midday": f"ഉച്ചയ്ക്ക് {SLOT_TIMES[slot]}",
-        "evening": f"വൈകിട്ട് {SLOT_TIMES[slot]}",
+        "morning": f"രാവിലെ {display_time or SLOT_TIMES[slot]}",
+        "midday": f"ഉച്ചയ്ക്ക് {display_time or SLOT_TIMES[slot]}",
+        "evening": f"വൈകിട്ട് {display_time or SLOT_TIMES[slot]}",
     }
-    time_options = [local_times[slot], SLOT_TIMES[slot]]
+    time_options = [local_times[slot], display_time or SLOT_TIMES[slot]]
     movement_options = [
         title_change_text(comparison, "ml"),
         title_change_text(comparison, "ml", compact=True),
