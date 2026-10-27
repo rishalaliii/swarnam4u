@@ -89,6 +89,23 @@ class ShortsDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "did not expose a verifiable handle"):
             upload_shorts.verify_channel_identity({"id": "channel-123", "snippet": {}})
 
+    def test_publish_window_guard_blocks_late_uploads(self):
+        zone = upload_shorts.IST
+        target = dt.datetime(2026, 10, 27, 17, 0, tzinfo=zone)
+        upload_shorts.ensure_publish_window(
+            target, now=dt.datetime(2026, 10, 27, 16, 54, tzinfo=zone)
+        )
+        with self.assertRaisesRegex(RuntimeError, "upload refused"):
+            upload_shorts.ensure_publish_window(
+                target, now=dt.datetime(2026, 10, 27, 16, 56, tzinfo=zone)
+            )
+        with self.assertRaisesRegex(RuntimeError, "upload refused"):
+            upload_shorts.ensure_publish_window(
+                target, now=dt.datetime(2026, 10, 27, 17, 1, tzinfo=zone)
+            )
+        with self.assertRaisesRegex(ValueError, "timezone information"):
+            upload_shorts.ensure_publish_window(target, now=dt.datetime(2026, 10, 27, 16, 50))
+
     def test_upload_dedupes_slot_even_if_rate_change_title_changes(self):
         old_title = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | വൈകിട്ട് 17:00 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
         changed_title = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 17:00 | ഇന്നലെയേക്കാൾ ₹100/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
