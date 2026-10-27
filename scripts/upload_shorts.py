@@ -120,7 +120,7 @@ def title_slot_identity(title: str) -> tuple[str, str, str] | None:
     parts = title.split(" | ")
     if len(parts) < 3:
         return None
-    match = re.search(r"(?<!\\d)(\\d{2}:\\d{2})(?!\\d)", parts[2])
+    match = re.search(r"(?<![0-9])([0-9]{2}:[0-9]{2})(?![0-9])", parts[2])
     if not match:
         return None
     return parts[0], parts[1], match.group(1)
