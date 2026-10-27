@@ -16,7 +16,13 @@ S.fmtDate=function(d,o){return new Date(d+"T00:00:00").toLocaleDateString("en-IN
 S.fmtStamp=function(iso){return new Date(iso).toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:"Asia/Kolkata"})+" IST"};
 S.hasRates=function(){var d=S.data;
   return !!(d&&d.updated&&!isNaN(new Date(d.updated))&&["gold","silver","platinum"].some(function(k){return d[k]&&Object.keys(d[k]).length}))};
-S.isStale=function(){return S.hasRates()&&(Date.now()-new Date(S.data.updated))>STALE_H*36e5};
+S.isStale=function(){
+   if(!S.hasRates())return false;
+   var today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+   var meta=META[S.metal]||META.gold,entry=(S.data[S.metal]||{})[meta.feat];
+   if(entry&&entry.date)return entry.date!==today;
+   return (Date.now()-new Date(S.data.updated))>STALE_H*36e5;
+ };
 /* change vs previous rate; null when no previous value is known */
 S.change=function(v){
   if(!v||v.yesterday==null||!v.yesterday)return null;
@@ -56,7 +62,7 @@ S.renderStamp=function(){
   else if(S.hasRates()&&S.liveFail&&!S.liveAt){box.dataset.s="stale";el.textContent="Live sources unreachable · showing last known rates from "+S.fmtStamp(S.data.updated)+" · tap Refresh"}
   else if(S.hasRates()){
     var st=S.isStale();box.dataset.s=st?"stale":"ok";
-    var base=S.data.live?"Live from AKGSMA · checked "+new Date(S.data.live).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit",second:"2-digit"}):(st?"Last verified ":"Updated ")+S.fmtStamp(S.data.updated)+" · "+(S.data.source||"AKGSMA Kerala")+(st?" · may be out of date":"");
+    var base=S.data.live?"Live rates checked "+new Date(S.data.live).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit",second:"2-digit"}):(st?"Last verified ":"Updated ")+S.fmtStamp(S.data.updated)+" · "+(S.data.source||"AKGSMA Kerala")+(st?" · may be out of date":"");
     el.textContent=base;
   }else if(S.error&&!S.data){box.dataset.s="none";el.textContent="Could not load rates. Retrying shortly."}
   else if(S.data){box.dataset.s="none";el.textContent=S.liveFail?"Live sources unreachable right now · tap Refresh to retry":"Rates unavailable · waiting for the first verified update"}
@@ -214,21 +220,21 @@ S.load=function(){
 };
 /* One live fetch parses gold, silver AND platinum together, so switching tabs never waits on the network. */
 S.refresh=function(force){
-  var gap=force?0:15000;
+  var gap=force?0:LIVE_MS;
   if(S.busy||(S.lastLive&&Date.now()-S.lastLive<gap))return Promise.resolve();
   S.busy=true;S.renderStamp();
   var fileP=S.load();                                       /* file and live run in parallel */
   var liveP=S.live(fileP).then(function(n){if(n){save();S.subs.forEach(function(f){f()})}return n});
-  return Promise.all([fileP,liveP]).then(function(){S.lastLive=Date.now();S.busy=false;S.renderStamp();S.renderDiag()});
+  return Promise.all([fileP,liveP]).then(function(){S.lastLive=Date.now();S.busy=false;S.renderStamp();S.renderDiag()},function(){S.liveFail=true;S.lastLive=Date.now();S.busy=false;S.renderStamp();S.renderDiag();return 0});
 };
 /* switching metal: show it instantly from memory, and quietly re-check in the background */
-S.tab=function(){S.refresh(false)};
+S.tab=function(){S.refresh(true)};
 
 S.start=function(cb){S.subs.push(cb);
   /* open: paint the last real rates this browser saved (never invented) so the page is never blank, and fetch the latest at the same instant */
   try{var k=localStorage.getItem("s4u-cache");if(k&&!S.data){var c=JSON.parse(k);if(c&&c.updated){S.data=c;delete S.data.live;S.renderStamp();cb()}}}catch(e){}
   S.refresh(true);                                           /* file + live check start immediately */
-  setInterval(function(){if(!document.hidden)S.refresh(false)},20000);
+  setInterval(function(){if(!document.hidden)S.refresh(false)},REFRESH_MS);
   document.addEventListener("visibilitychange",function(){if(!document.hidden)S.refresh(false)});
   window.addEventListener("online",function(){S.refresh(true)});
   /* IST midnight: new date -> fetch fresh rates and redraw everything (poster date/design, trends range) without a reload */
