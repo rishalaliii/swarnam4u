@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import Image, features
-from scripts import build_shorts, shorts_preflight, upload_shorts
+from scripts import build_shorts, shorts_preflight, upload_shorts, upload_shorts
 
 
 class ShortsDesignTests(unittest.TestCase):
