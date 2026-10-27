@@ -233,25 +233,25 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     y = 540
     card_height = 275
     pawan_label_font = find_font(lang, True, 23)
-    pawan_value_font = find_font("en", True, 40)
+    pawan_value_font = find_font("en", True, 46)
     gram_font = find_font("en", False, 24) if lang == "en" else find_font("ml", False, 24)
-    rate_font = find_font("en", True, 49)
+    rate_font = find_font("en", True, 62)
     change_font = find_font(lang, True, 17 if lang == "ml" else 18)
     change_amount_font = find_font("en", True, 18)
     for label, key in labels:
         d.rounded_rectangle((65, y, 1015, y + card_height), radius=28, fill="#182330", outline="#354455", width=2)
         d.rounded_rectangle((65, y, 82, y + card_height), radius=8, fill="#C7A66A")
         d.text((112, y + 16), label, font=label_font, fill="#E4D4B5")
-        d.text((112, y + 60), inr(values[key]), font=rate_font, fill="#FFFFFF")
-        d.text((115, y + 119), gram_text, font=gram_font, fill="#ACB9C7")
-        d.line((112, y + 153, 968, y + 153), fill="#566170", width=2)
+        d.text((112, y + 56), inr(values[key]), font=rate_font, fill="#FFFFFF", stroke_width=1, stroke_fill="#FFFFFF")
+        d.text((115, y + 128), gram_text, font=gram_font, fill="#D4DEE8")
+        d.line((112, y + 160, 968, y + 160), fill="#718094", width=2)
         if key != "Silver · 999":
-            d.text((112, y + 161), pawan_text, font=pawan_label_font, fill="#D8BC83")
-            d.text((112, y + 190), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF")
+            d.text((112, y + 166), pawan_text, font=pawan_label_font, fill="#E7C879")
+            d.text((112, y + 194), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF", stroke_width=1, stroke_fill="#FFFFFF")
         else:
-            d.text((112, y + 178), silver_note, font=gram_font, fill="#D8BC83")
+            d.text((112, y + 182), silver_note, font=gram_font, fill="#E7C879")
         label_text, change_amount = card_change_label(comparisons[key], lang)
-        d.text((112, y + 242), label_text, font=change_font, fill="#D8BC83")
+        d.text((112, y + 242), label_text, font=change_font, fill="#E7C879")
         if change_amount:
             change_value = f"{change_amount}/g"
             amount_width = d.textbbox((0, 0), change_value, font=change_amount_font)[2]
@@ -339,8 +339,8 @@ def render_video(image_path: pathlib.Path, audio_path: pathlib.Path, video_path:
         "-loop", "1", "-framerate", "30", "-i", str(image_path),
         "-i", str(audio_path),
         "-vf", vf, "-t", f"{total:.2f}", "-shortest",
-        "-c:v", "libx264", "-preset", "veryfast", "-tune", "stillimage",
-        "-pix_fmt", "yuv420p", "-r", "30",
+        "-c:v", "libx264", "-preset", "slow", "-tune", "stillimage", "-crf", "14", "-profile:v", "high",
+        "-pix_fmt", "yuv420p", "-r", "30", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
         "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
         "-movflags", "+faststart", str(video_path)
     ])
