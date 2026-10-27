@@ -32,18 +32,41 @@ Deploy `worker/rates-worker.js` (adds a `?api=rates` JSON endpoint that parses A
 
 ## YouTube Shorts automation for `@SWARANAM4U`
 
-The scheduled `Build Swarnam4U Shorts` workflow creates English and Malayalam 9:16 videos for the morning, midday and evening slots (10:10, 12:30 and 16:30 IST build starts for 10:30, 13:00 and 17:00 IST target times). It refreshes/validates the rate board first and attaches the generated MP4, audio, image and manifest as a downloadable artifact. Each MP4 is checked with `ffprobe` for exactly one H.264 video stream at 1080×1920 / 30 fps / yuv420p, exactly one AAC 48 kHz audio stream, a 5–60 second duration and a reasonable minimum file size. Build failures include command diagnostics; media that fails validation cannot reach the upload step.
+Channel: https://www.youtube.com/@SWARANAM4U
 
-- A manual run defaults to **build-only**. The `publish_now` input must be explicitly set to `true` to publish from a manual run.
-- Scheduled uploads remain disabled until the repository variable `YOUTUBE_AUTO_PUBLISH` is set to `true` and the two Actions secrets below are configured.
-- Required secrets: `YOUTUBE_CLIENT_SECRET_JSON` (the entire OAuth client JSON) and `YOUTUBE_REFRESH_TOKEN` (a refresh token issued for the channel-owner account).
-- The refresh token must be authorized with both `https://www.googleapis.com/auth/youtube.upload` and `https://www.googleapis.com/auth/youtube.readonly`: upload scope alone is not enough for the channel-identity and recent-upload checks.
-- Optional Actions variable: `YOUTUBE_EXPECTED_CHANNEL_HANDLE`; defaults to `@SWARANAM4U`.
-- Before enabling scheduled publishing, run Actions > **Verify YouTube connection**. That workflow checks the OAuth account, expected handle and upload-history access without uploading anything. The uploader also re-checks the handle before each upload and refuses a mismatch.
-- Keep the Google OAuth consent screen in **Production** for a continuing unattended refresh-token workflow. Google OAuth projects left in **Testing** can receive refresh tokens that expire after seven days; resolve any Google verification requirements prompted for the scopes before relying on scheduled uploads.
-- A scheduled/manual slot is serialized against the same slot to prevent overlapping uploads. Upload metadata is validated rather than silently truncating a title, and YouTube requests use bounded retries.
+The scheduled `Build Swarnam4U Shorts` workflow refreshes and validates the current AKGSMA board, then generates English and Malayalam vertical videos for the morning (10:30 IST), midday (13:00 IST) and evening (17:00 IST) slots. Build starts are scheduled for 10:10, 12:30 and 16:30 IST to leave time for runners to start and check today's board. GitHub Actions can be delayed; if a slot is less than five minutes away or has passed, the uploader refuses the upload instead of publishing late.
 
-Never commit the OAuth JSON or refresh token to the repository, and never send them in chat. Review at least one generated MP4 from an artifact before enabling scheduled publication.
+The renderer validates each MP4 with `ffprobe`: H.264 video at 1080×1920/30 fps/yuv420p, AAC audio at 48 kHz, valid duration and minimum file size. A passing build attaches MP4, MP3, card PNG, preflight report and manifest as a downloadable Actions artifact.
+
+### Safe upload modes
+
+- `build_only` is the manual default: generate the files and artifact only; do not contact YouTube.
+- `private_test` uploads an unmistakably labelled English/Malayalam pair with **Private** visibility and no scheduled publish time. Use this to verify real OAuth and inspect metadata in Studio.
+- `schedule` uploads the pair as private and asks YouTube to publish at the selected slot's target time. Scheduling is allowed only when the target is in the future with at least five minutes remaining.
+- Scheduled daily publishing stays disabled until the Actions repository variable `YOUTUBE_AUTO_PUBLISH` is set to `true`. A manual `private_test` or `schedule` selection is a one-run explicit opt-in and does not require that daily variable, but still requires the OAuth secrets and current preflight.
+- The uploader verifies the OAuth account matches `@SWARANAM4U`, checks recent uploads for exact or same-slot duplicates, requires both valid MP4s, uses bounded upload retries, and writes an `upload-report.json` containing video URLs or the failure reason.
+
+### One-time YouTube OAuth setup
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create/select a project and enable **YouTube Data API v3**.
+2. Configure the OAuth consent screen and create an OAuth client of type **Desktop app**. Download its JSON file. The account used in the authorization browser must own or manage `@SWARANAM4U`.
+3. From the repository root on Windows, install the local setup dependencies and run the helper. Replace the sample JSON path with the exact file you downloaded:
+
+   ```powershell
+   py -m pip install -r requirements-youtube-setup.txt
+   py scripts/create_youtube_refresh_token.py --client-secrets "$HOME/Downloads/client_secret.json"
+   ```
+
+   The helper requests `youtube.upload` and `youtube.readonly`, confirms the account resolves to the expected channel, and only then prints a refresh token. If channel verification fails, it prints no token. Keep the client JSON and token local; never paste either into chat or commit them.
+4. In repository **Settings → Secrets and variables → Actions → Secrets**, add:
+   - `YOUTUBE_CLIENT_SECRET_JSON`: the complete contents of the downloaded OAuth client JSON.
+   - `YOUTUBE_REFRESH_TOKEN`: the refresh token printed by the local helper.
+5. In repository **Settings → Secrets and variables → Actions → Variables**, set `YOUTUBE_EXPECTED_CHANNEL_HANDLE` to `@SWARANAM4U` (the uploader uses this default if the variable is absent).
+6. In Actions, run **Verify YouTube connection**. This checks account identity and uploads-playlist access without uploading a video.
+7. Run **Build Swarnam4U Shorts**; choose a slot that has current board rates, then choose `private_test`. Inspect both videos in [YouTube Studio](https://studio.youtube.com/). Check the English title/description, Malayalam-script title/description, prices, pronunciation, video quality and visibility. The test videos will remain private.
+8. Only after the private test succeeds, set `YOUTUBE_AUTO_PUBLISH=true` to enable the daily scheduled uploads. Leave it unset if you prefer to manually select each `schedule` run.
+
+**OAuth lifetime:** Google documents that refresh tokens issued to external test users while the consent screen is in **Testing** can expire after seven days. For reliable unattended daily publishing, review Google's [OAuth publishing-status guidance](https://support.google.com/cloud/answer/15549945?hl=en) and complete any verification/production steps required for the project's YouTube scopes. Do not assume a testing-mode refresh token will last indefinitely.
 
 Scheduled workflows on public repos are paused after 60 days without repo activity; re-enable under Actions if that happens.
 Local preview: `python -m http.server 8000`.
