@@ -7,6 +7,7 @@ on:
       - "scripts/fetch_rates.py"
       - "scripts/rate_change_utils.py"
       - "scripts/build_shorts.py"
+      - "scripts/upload_shorts.py"
       - "requirements-shorts.txt"
       - "tests/test_shorts_pipeline.py"
       - ".github/workflows/build-shorts.yml"
