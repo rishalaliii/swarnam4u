@@ -44,7 +44,7 @@ export function build(results) {
   if (!results.length) return null;
   const top = results.map(r => r.date).sort().pop();
   const gd = results.find(r => r.date === top && r.g916);
-  const sd = results.find(r => r.date === top && r.s999) || results.find(r => r.s999);
+  const sd = results.find(r => r.date === top && r.s999); // Never label a stale silver quote with a newer board date.
   const out = { date: top, gold: {}, silver: {}, calc: [], sources: results.map(r => r.name) };
   if (gd) {
     const g = gd.g916; out.source = gd.name;
