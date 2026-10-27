@@ -143,7 +143,7 @@ var okLiveGold=function(x){
 function pageHasCurrentDate(text){
   var prefix=String(text||"").slice(0,4000),today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
   var months={January:"01",February:"02",March:"03",April:"04",May:"05",June:"06",July:"07",August:"08",September:"09",October:"10",November:"11",December:"12"};
-  function mn(m){return months[m]||months[(m||"").slice(0,3)];}
+  function mn(m){m=String(m||"");var cap=m.charAt(0).toUpperCase()+m.slice(1).toLowerCase();return months[cap]||months[cap.slice(0,3)];}
   function same(y,m,d){var mm=mn(m);return !!mm&&(y+"-"+mm+"-"+String(Number(d)).padStart(2,"0")===today);}
   var re=/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Z][a-z]+)\s*,?\s+(\d{4})\b/gi,m;
   while((m=re.exec(prefix)))if(same(m[3],m[2],m[1]))return true;
