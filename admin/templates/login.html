@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swarnam4U · Admin sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body class="login-body">
+<div class="login-shell">
+  <div class="login-brand"><div class="brand-mark">S<span>4U</span></div><div><strong>SWARNAM4U</strong><small>CREATOR CONTROL ROOM</small></div></div>
+  <div class="login-card">
+    <div class="eyebrow"><span class="pulse-dot"></span> PRIVATE ADMIN AREA</div>
+    <h1>Welcome<br>back.</h1><p class="muted">Manage your daily rate videos, publishing workflow and channel performance from one place.</p>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    {% if not setup %}<div class="alert warning">Admin credentials are not configured yet. Add ADMIN_USERNAME, ADMIN_PASSWORD and ADMIN_SESSION_SECRET in your hosting environment.</div>{% endif %}
+    <form method="post" autocomplete="on">
+      <label for="username">Admin username</label><input id="username" name="username" autocomplete="username" required autofocus>
+      <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary login-btn" type="submit">Sign in securely <span>↗</span></button>
+    </form>
+    <div class="login-foot"><span class="lock-icon">◈</span> Encrypted session · Admin access only</div>
+  </div>
+  <p class="login-caption">LIVE RATES. READY-TO-PUBLISH STORIES.</p>
+</div>
+</body></html>
