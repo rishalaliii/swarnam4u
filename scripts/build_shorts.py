@@ -360,7 +360,8 @@ async def main_async(slot: str) -> int:
     publish_mode = os.environ.get("SHORTS_PUBLISH_MODE", "scheduled_private").strip().lower()
     if publish_mode not in {"scheduled_private", "public_now"}:
         raise ValueError("SHORTS_PUBLISH_MODE must be scheduled_private or public_now.")
-    display_time = dt.datetime.now(IST).strftime("%H:%M") if publish_mode == "public_now" else SLOT_TIMES[slot]
+    use_current_time = os.environ.get("SHORTS_USE_CURRENT_TIME", "").strip().lower() == "true"
+    display_time = dt.datetime.now(IST).strftime("%H:%M") if use_current_time else SLOT_TIMES[slot]
     primary_change = comparisons["22K · 916"]
     manifest = {
         "date": date.isoformat(),
