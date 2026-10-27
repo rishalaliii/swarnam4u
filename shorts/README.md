@@ -29,15 +29,15 @@ If all three runs succeed, that is six generated clips per day: three English an
 The scheduled build only runs once the workflow is present on the default branch. It is intentionally not enabled for YouTube uploading yet.
 
 ## Current limitations
-- The uploader script is included, but it is disabled by default. Publishing happens only if the repository Actions variable `YOUTUBE_AUTO_PUBLISH` is explicitly set to `true` and both OAuth secrets are present.
-- Every newly uploaded English or Malayalam Short uses the shared YouTube description template. It includes: “Check out the latest rates via https://swarnam4u.onrender.com”.
+- Manual runs default to `build_only`; choose `private_test` for a private validation pair or `schedule` for an explicit one-run scheduled upload. Daily scheduled uploads remain disabled unless `YOUTUBE_AUTO_PUBLISH=true` and both OAuth secrets are configured.
+- English and Malayalam descriptions are localized and include the AKGSMA source, the latest-rates website link, and the channel link https://www.youtube.com/@SWARANAM4U.
 - The current board date and saved published-rate values must pass preflight. When AKGSMA has not published today's board rates, generation stops; no stale rates are published.
 - The video displays only the board's published 22K/916, 18K/750 and silver 999 values. It does not show 925 silver because AKGSMA has been showing it as unavailable.
 - Calculated 24K/14K prices, platinum fallbacks, and estimated values are deliberately excluded from these Shorts.
 - Neural TTS availability, Malayalam pronunciation, final aesthetics and end-to-end video playback still need review from a successful live workflow artifact.
-- YouTube setup still requires enabling YouTube Data API v3 for a Google Cloud project, creating an OAuth client, and securely adding two Actions Secrets: `YOUTUBE_CLIENT_SECRET_JSON` (the OAuth client JSON contents) and `YOUTUBE_REFRESH_TOKEN` (a refresh token granted the YouTube upload scope).
+- YouTube setup requires YouTube Data API v3, a Desktop-app OAuth client, `scripts/authorize_youtube.py`, and two Actions Secrets. The root README documents the end-to-end steps and explains why tokens from an external consent screen left in Testing can expire after seven days.
 - Only after a successful artifact review should the repository Actions variable `YOUTUBE_AUTO_PUBLISH=true` be added. Leave the variable absent otherwise. Never paste credentials or refresh tokens into issues or chat.
-- The uploader schedules the English and Malayalam pair for the slot's target time, and checks the latest 50 entries in the channel's uploads playlist to avoid re-uploading matching titles. Review this behavior on a test channel before production.
+- The uploader checks recent uploads for exact or normalized language/date/slot duplicates, uses bounded retries and records an upload report. Run `private_test` and confirm both videos remain Private before enabling daily publishing.
 
 The publish gate stays disabled until those checks are completed. Do not edit snapshot timestamps or copy old prices forward to bypass preflight.
 
