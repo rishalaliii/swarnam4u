@@ -16,6 +16,8 @@
 <div class="navlabel">Operations</div>
 <button class="navbtn active" data-page="dashboard"><span class="ico">◈</span>Overview</button>
 <button class="navbtn" data-page="rates"><span class="ico">◇</span>Market rates</button>
+<button class="navbtn" data-page="analytics"><span class="ico">⌁</span>Analytics & trends</button>
+<button class="navbtn" data-page="poster"><span class="ico">▧</span>Poster generator</button>
 <button class="navbtn" data-page="youtube"><span class="ico">▷</span>YouTube studio</button>
 <button class="navbtn" data-page="upload"><span class="ico">↑</span>Upload video</button>
 <button class="navbtn" data-page="github"><span class="ico">⌘</span>GitHub workflows</button>
@@ -42,6 +44,17 @@
 <section class="page hidden" id="page-rates">
 <div class="pagehead"><div><div class="eyebrow">Market data / read-only</div><h1>Rate monitor</h1><p class="sub">Rates from the current public repository snapshot. Values are not editable here.</p></div><span class="badge ok">Repository source</span></div>
 <div class="panel"><div class="panelhead"><h2>Latest published snapshot</h2><a id="ratesSource" class="btn" href="https://akgsma.com" target="_blank" rel="noreferrer">Open AKGSMA ↗</a></div><div id="ratesTable" class="tablewrap"><div class="empty">Loading published rates…</div></div><p class="tiny">Calculated values retain their source labels. This page never fabricates missing prices.</p></div>
+</section>
+<section class="page hidden" id="page-analytics">
+<div class="pagehead"><div><div class="eyebrow">Insights / rate history</div><h1>Analytics & trends</h1><p class="sub">Observed history from the published rates snapshot. Gaps are not interpolated.</p></div><span class="badge">Rates history</span></div>
+<div class="grid4"><div class="metric"><div class="metrichead">Gold history <span class="orb">◇</span></div><div class="num" id="goldHistoryCount">—</div><div class="hint">Observed daily points</div></div><div class="metric"><div class="metrichead">Silver history <span class="orb">◇</span></div><div class="num" id="silverHistoryCount">—</div><div class="hint">Observed daily points</div></div><div class="metric"><div class="metrichead">Platinum history <span class="orb">◇</span></div><div class="num" id="platinumHistoryCount">—</div><div class="hint">Observed daily points</div></div><div class="metric"><div class="metrichead">Snapshot updated <span class="orb">⌁</span></div><div class="num" id="historyUpdated">—</div><div class="hint">Published data timestamp</div></div></div>
+<div class="panel" style="margin-top:14px"><div class="panelhead"><h2>Gold · 22K / 916 · ₹ per gram</h2><span class="tiny">Daily observed points</span></div><canvas id="goldChart" height="220" style="width:100%;height:220px"></canvas></div>
+<div class="panel" style="margin-top:14px"><div class="panelhead"><h2>Silver · 925 · ₹ per gram</h2><span class="tiny">Daily observed points</span></div><canvas id="silverChart" height="220" style="width:100%;height:220px"></canvas></div>
+<div class="panel" style="margin-top:14px"><div class="panelhead"><h2>Platinum · 950 · ₹ per gram</h2><span class="tiny">Daily observed points</span></div><canvas id="platinumChart" height="220" style="width:100%;height:220px"></canvas></div>
+</section>
+<section class="page hidden" id="page-poster">
+<div class="pagehead"><div><div class="eyebrow">Creative studio / export</div><h1>Rate poster generator</h1><p class="sub">Generate a shareable poster from the latest published rate snapshot.</p></div><span class="badge">Local preview</span></div>
+<div class="cols"><div class="panel"><div class="panelhead"><h2>Poster settings</h2></div><div class="field"><label for="posterDate">Date displayed</label><input id="posterDate" type="date"></div><div class="field"><label for="posterHeading">Heading</label><input id="posterHeading" value="TODAY'S METAL RATES" maxlength="50"></div><div class="field"><label for="posterSubheading">Subheading</label><input id="posterSubheading" value="KERALA · SWARNAM4U" maxlength="60"></div><div class="field"><label for="posterLanguage">Poster language</label><select id="posterLanguage"><option value="en">English</option><option value="ml">Malayalam labels (prices remain unchanged)</option></select></div><div class="actions"><button class="btn primary" id="makePoster">Generate poster</button><button class="btn" id="downloadPoster">Download PNG</button></div><div class="notice">Poster prices are sourced from the last published snapshot and may be stale if the rate updater has not run successfully. Check the displayed date/source before sharing.</div></div><div class="panel"><div class="panelhead"><h2>Poster preview</h2><span class="tiny">1080 × 1350</span></div><canvas id="posterCanvas" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;background:#090d19"></canvas></div></div>
 </section>
 <section class="page hidden" id="page-youtube">
 <div class="pagehead"><div><div class="eyebrow">Channel / authorization</div><h1>YouTube studio</h1><p class="sub">Connect the channel owner account and verify the active channel.</p></div><span class="badge" id="ytBadge">Not checked</span></div>
