@@ -10,6 +10,17 @@ SLOT_TIMES = {
     "evening": "17:00",
 }
 
+MALAYALAM_MONTHS = {
+    1: "ജനുവരി", 2: "ഫെബ്രുവരി", 3: "മാർച്ച്", 4: "ഏപ്രിൽ",
+    5: "മേയ്", 6: "ജൂൺ", 7: "ജൂലൈ", 8: "ഓഗസ്റ്റ്",
+    9: "സെപ്റ്റംബർ", 10: "ഒക്ടോബർ", 11: "നവംബർ", 12: "ഡിസംബർ",
+}
+
+
+def malayalam_date_text(date: dt.date) -> str:
+    """Format a date entirely in Malayalam script except for Western digits."""
+    return f"{date.day} {MALAYALAM_MONTHS[date.month]} {date.year}"
+
 
 def compare_rate(current: float | int | None, previous: float | int | None) -> dict:
     """Compare the current published per-gram rate with the saved previous-day value."""
@@ -138,12 +149,7 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
             raise ValueError(f"Generated English title exceeds YouTube's 100-character limit ({len(title)} characters).")
         return title
 
-    malayalam_months = {
-        1: "ജനുവരി", 2: "ഫെബ്രുവരി", 3: "മാർച്ച്", 4: "ഏപ്രിൽ",
-        5: "മേയ്", 6: "ജൂൺ", 7: "ജൂലൈ", 8: "ഓഗസ്റ്റ്",
-        9: "സെപ്റ്റംബർ", 10: "ഒക്ടോബർ", 11: "നവംബർ", 12: "ഡിസംബർ",
-    }
-    date_text = f"{date.day} {malayalam_months[date.month]} {date.year}"
+    date_text = malayalam_date_text(date)
     local_times = {
         "morning": f"രാവിലെ {SLOT_TIMES[slot]}",
         "midday": f"ഉച്ചയ്ക്ക് {SLOT_TIMES[slot]}",
