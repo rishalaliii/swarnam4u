@@ -247,8 +247,11 @@ def main() -> int:
     youtube = get_youtube()
     existing_titles, channel_handle = recent_uploaded_titles(youtube)
     results = []
+    # Public-now titles use the actual Kerala time immediately before upload,
+    # rather than the fixed morning/midday/evening slot time.
+    upload_time_ist = dt.datetime.now(IST).strftime("%H:%M") if publish_mode == "public_now" else None
     for lang in ("en", "ml"):
-        title = video_title(lang, today, slot, primary_change)
+        title = video_title(lang, today, slot, primary_change, display_time=upload_time_ist)
         if is_duplicate_slot(existing_titles, title):
             results.append({"language": lang, "title": title, "status": "skipped_duplicate"})
             continue
