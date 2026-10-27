@@ -13,6 +13,7 @@ import datetime as dt
 import json
 import os
 import pathlib
+import re
 import sys
 from zoneinfo import ZoneInfo
 from urllib.parse import urlparse
@@ -137,6 +138,64 @@ def recent_uploaded_titles(youtube) -> tuple[set[str], str]:
     ).execute()
     titles = {row.get("snippet", {}).get("title", "") for row in result.get("items", [])}
     return titles, channel_handle
+
+
+def title_slot_identity(title: str) -> tuple[str, str, str, str] | None:
+    """Normalize language/date/time so reruns cannot duplicate a slot after the rate change changes."""
+    parts = title.split(" | ")
+    if len(parts) < 3:
+        return None
+
+    prefix = parts[0].strip().casefold()
+    if prefix.startswith("today's gold rate"):
+        language = "en"
+    elif prefix.startswith("innathe swarna vila") or prefix.startswith("ഇന്നത്തെ സ്വർണ്ണവില"):
+        language = "ml"
+    else:
+        return None
+
+    date_text = parts[1].strip()
+    board_date = None
+    for date_format in ("%d %b %Y", "%d %B %Y"):
+        try:
+            board_date = dt.datetime.strptime(date_text, date_format).date().isoformat()
+            break
+        except ValueError:
+            pass
+    if board_date is None:
+        malayalam_months = {
+            "ജനുവരി": 1, "ഫെബ്രുവരി": 2, "മാർച്ച്": 3, "ഏപ്രിൽ": 4,
+            "മേയ്": 5, "ജൂൺ": 6, "ജൂലൈ": 7, "ഓഗസ്റ്റ്": 8,
+            "സെപ്റ്റംബർ": 9, "ഒക്ടോബർ": 10, "നവംബർ": 11, "ഡിസംബർ": 12,
+        }
+        match = re.fullmatch(r"(\d{1,2})\s+(\S+)\s+(\d{4})", date_text)
+        if match and match.group(2) in malayalam_months:
+            try:
+                board_date = dt.date(
+                    int(match.group(3)), malayalam_months[match.group(2)], int(match.group(1))
+                ).isoformat()
+            except ValueError:
+                return None
+    if board_date is None:
+        return None
+
+    time_match = re.search(r"(?<![0-9])([0-9]{2}:[0-9]{2})(?![0-9])", parts[2])
+    if not time_match:
+        return None
+
+    # A private test must not block the real scheduled upload for the same slot.
+    mode = "private_test" if "[PRIVATE TEST]" in title else "production"
+    return language, board_date, time_match.group(1), mode
+
+
+def is_duplicate_slot(existing_titles: set[str], candidate_title: str) -> bool:
+    """Reject an already uploaded language/date/slot even if its rate-change wording changed."""
+    if candidate_title in existing_titles:
+        return True
+    identity = title_slot_identity(candidate_title)
+    if identity is None:
+        return False
+    return any(title_slot_identity(existing) == identity for existing in existing_titles)
 
 
 def video_description(date: dt.date, lang: str = "en", private_test: bool = False) -> str:
@@ -307,7 +366,7 @@ def main() -> int:
             title = video_title(lang, today, slot, primary_change)
             if mode == "private_test":
                 title = private_test_title(title)
-            if title in existing_titles:
+            if is_duplicate_slot(existing_titles, title):
                 report["results"].append({"language": lang, "title": title, "mode": mode, "status": "skipped_duplicate"})
                 save_report()
                 continue
