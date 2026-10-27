@@ -20,19 +20,27 @@ class ShortsDesignTests(unittest.TestCase):
 
     def test_price_formatting(self):
         self.assertEqual(build_shorts.inr(13085), "₹13,085")
+        self.assertEqual(build_shorts.inr(13085 * 8), "₹1,04,680")
+        self.assertEqual(build_shorts.inr(10705 * 8), "₹85,640")
 
-    def test_english_script_has_source_and_link(self):
+    def test_english_script_has_source_link_and_pawan_totals(self):
         text = build_shorts.script_text("en", self.date, self.values)
         self.assertIn("AKGSMA", text)
         self.assertIn("swarnam4u.onrender.com", text)
         self.assertIn("₹13,085", text)
+        self.assertIn("₹1,04,680", text)
+        self.assertIn("₹85,640", text)
+        self.assertIn("eight grams, one pawan", text)
         self.assertIn("27 October 2026", text)
 
-    def test_malayalam_script_has_link_and_prices(self):
+    def test_malayalam_script_has_link_prices_and_pawan_totals(self):
         text = build_shorts.script_text("ml", self.date, self.values)
         self.assertIn("swarnam4u.onrender.com", text)
         self.assertIn("₹10,705", text)
         self.assertIn("₹220", text)
+        self.assertIn("ഒരു പവൻ", text)
+        self.assertIn("₹1,04,680", text)
+        self.assertIn("₹85,640", text)
 
     def test_board_parser_reads_published_rates_and_refuses_na_925(self):
         text = (
@@ -59,6 +67,11 @@ class ShortsDesignTests(unittest.TestCase):
         latin = build_shorts.find_font("en", True, 32)
         self.assertIn("malayalam", malayalam.getname()[0].lower())
         self.assertIn("dejavu sans", latin.getname()[0].lower())
+
+    def test_renderer_avoids_bullet_glyph_that_created_square_boxes(self):
+        source = Path(build_shorts.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("•", source)
+        self.assertNotIn("□", source)
 
     def test_both_rate_cards_are_vertical_1080_by_1920(self):
         with tempfile.TemporaryDirectory() as temp:
