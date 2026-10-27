@@ -147,7 +147,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
     gold_change = spoken_change_text(comparisons["22K · 916"], lang)
     if lang == "en":
         return (
-            f"AKGSMA Kerala gold and silver rates for {date_en}. "
+            f"India gold and silver rate update for {date_en}, using published board rates. "
             f"Twenty-two carat 916 gold: {v22} per gram. "
             f"One pawan, equal to eight grams, is {v22_pawan}. "
             f"{gold_change} "
@@ -210,7 +210,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
         silver_note = "ഒരു ഗ്രാമിന്റെ നിരക്ക് മാത്രം"
     else:
         headline = "GOLD & SILVER RATES"
-        intro = "KERALA | PUBLISHED BOARD RATES"
+        intro = "INDIA | GOLD & SILVER RATE UPDATE"
         labels = [("Gold 22K (916)", "22K · 916"), ("Gold 18K (750)", "18K · 750"), ("Silver (999)", "Silver · 999")]
         source_text = "Source:"
         disclaimer = "Published board rates | Per gram"
@@ -339,9 +339,9 @@ def render_video(image_path: pathlib.Path, audio_path: pathlib.Path, video_path:
         "-loop", "1", "-framerate", "30", "-i", str(image_path),
         "-i", str(audio_path),
         "-vf", vf, "-t", f"{total:.2f}", "-shortest",
-        "-c:v", "libx264", "-preset", "slow", "-tune", "stillimage", "-crf", "14", "-profile:v", "high",
+        "-c:v", "libx264", "-preset", "veryslow", "-tune", "stillimage", "-crf", "10", "-profile:v", "high",
         "-pix_fmt", "yuv420p", "-r", "30", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
-        "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+        "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
         "-movflags", "+faststart", str(video_path)
     ])
     verify = checked_run([
