@@ -140,7 +140,20 @@ var okLiveGold=function(x){
   var iso=m[3]+"-"+(months[m[2]]||"00")+"-"+String(Number(m[1])).padStart(2,"0");
   return isTodayIstDate(iso)&&/AKGSMA/i.test(x)&&/22\s+Karat\s+Gold/i.test(x);
 };
-var okPage=function(x){return /(?:₹|Rs\.?)\s*\d/.test(x)};
+function pageHasCurrentDate(text){
+  var prefix=String(text||"").slice(0,4000),today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+  var months={January:"01",February:"02",March:"03",April:"04",May:"05",June:"06",July:"07",August:"08",September:"09",October:"10",November:"11",December:"12"};
+  function mn(m){m=String(m||"");var cap=m.charAt(0).toUpperCase()+m.slice(1).toLowerCase();return months[cap]||months[cap.slice(0,3)];}
+  function same(y,m,d){var mm=mn(m);return !!mm&&(y+"-"+mm+"-"+String(Number(d)).padStart(2,"0")===today);}
+  var re=/\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Z][a-z]+)\s*,?\s+(\d{4})\b/gi,m;
+  while((m=re.exec(prefix)))if(same(m[3],m[2],m[1]))return true;
+  re=/\b([A-Z][a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?[,]?\s+(\d{4})\b/gi;
+  while((m=re.exec(prefix)))if(same(m[3],m[1],m[2]))return true;
+  re=/\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/g;
+  while((m=re.exec(prefix))){if((m[3]+"-"+String(Number(m[2])).padStart(2,"0")+"-"+String(Number(m[1])).padStart(2,"0"))===today)return true;}
+  return false;
+}
+var okPage=function(x){return pageHasCurrentDate(x)&&/(?:₹|Rs\.?)\s*\d/.test(x)};
 /* returns number of rates applied */
 S.ov={};S.liveAt=null;
 var BACKUP0={

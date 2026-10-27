@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import Image, features
-from scripts import build_shorts, shorts_preflight, upload_shorts, rate_change_utils
+from scripts import build_shorts, shorts_preflight, upload_shorts, rate_change_utils, fetch_rates
 
 
 class ShortsDesignTests(unittest.TestCase):
@@ -161,6 +161,21 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertEqual(rates["gold_18k_750"], 10705)
         self.assertEqual(rates["silver_999"], 220)
         self.assertIsNone(rates["silver_925_published"])
+
+    def test_fallback_rate_pages_must_show_current_date(self):
+        today = "2026-10-27"
+        self.assertTrue(fetch_rates.page_has_current_date(
+            "Platinum Rate in Kerala, Platinum Price Today (27 October 2026) ₹4,932", today
+        ))
+        self.assertTrue(fetch_rates.page_has_current_date(
+            "Updated On - 27 Oct 2026. Silver Rate ₹220", today
+        ))
+        self.assertFalse(fetch_rates.page_has_current_date(
+            "Platinum Price in Kerala Today. Updated On - 03 Aug 2026. ₹4,932", today
+        ))
+        self.assertFalse(fetch_rates.page_has_current_date(
+            "Platinum price ₹4,932 per gram today", today
+        ))
 
     def test_preflight_respects_source_robots_rules(self):
         self.assertTrue(shorts_preflight.robots_allows("User-agent: *\nAllow: /\n"))

@@ -124,6 +124,38 @@ def find_exact(text, rx, lo, hi):
     return v if lo <= v <= hi else None
 
 
+def page_has_current_date(text: str, today: str) -> bool:
+    """Require an explicit current date near a page header before accepting fallback prices as today's rates."""
+    month_names = "January February March April May June July August September October November December".split()
+    months = {name: i for i, name in enumerate(month_names, 1)}
+    months.update({name[:3]: i for i, name in enumerate(month_names, 1)})
+    prefix = re.sub(r"\s+", " ", text[:4000])
+
+    def iso(year: str, month: str, day: str) -> str | None:
+        month_number = months.get(month.capitalize())
+        if not month_number:
+            return None
+        try:
+            return datetime.date(int(year), month_number, int(day)).isoformat()
+        except ValueError:
+            return None
+
+    # Support 27 October 2026 / 27th October 2026 and October 27, 2026.
+    for match in re.finditer(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+([A-Z][a-z]+)\s*,?\s+(\d{4})\b", prefix, re.I):
+        if iso(match[3], match[2], match[1]) == today:
+            return True
+    for match in re.finditer(r"\b([A-Z][a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?[,]?\s+(\d{4})\b", prefix, re.I):
+        if iso(match[3], match[1], match[2]) == today:
+            return True
+    for match in re.finditer(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b", prefix):
+        try:
+            if datetime.date(int(match[3]), int(match[2]), int(match[1])).isoformat() == today:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def find_value(text, label_rx, lo, hi):
     """Plausible price shortly after the label. Pass 1 accepts only rupee-prefixed numbers; pass 2 plain numbers (never a year)."""
     for rupee_only in (True, False):
@@ -247,6 +279,9 @@ def main():
             continue
         try:
             text = get_text(url, r"₹|Rs\.?")
+            if not page_has_current_date(text, today):
+                print("%s failed: fallback page does not show today's date %s; retaining saved values" % (name, today))
+                continue
             for label, (grp, rx, (lo, hi)) in pats.items():
                 if (grp, label) in got:
                     continue
