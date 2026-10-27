@@ -47,7 +47,7 @@ def verify_channel_identity(channel: dict, expected_handle: str = EXPECTED_CHANN
     snippet = channel.get("snippet") or {}
     actual = snippet.get("customUrl") or snippet.get("handle") or ""
     if not normalize_channel_handle(actual):
-        raise RuntimeError("The authorized YouTube channel did not expose a handle; refusing to upload. Set the expected channel ID and verify it manually before changing this guard.")
+        raise RuntimeError("The authorized YouTube channel did not expose a verifiable handle; upload refused. Verify the OAuth account and channel handle before retrying.")
     if normalize_channel_handle(actual) != normalize_channel_handle(expected_handle):
         raise RuntimeError(
             f"Authorized YouTube channel handle is @{normalize_channel_handle(actual)}, "
