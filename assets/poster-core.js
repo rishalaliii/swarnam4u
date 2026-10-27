@@ -30,7 +30,7 @@ function ist(d,o){return new Intl.DateTimeFormat("en-IN",Object.assign({timeZone
 function dateLabel(d){return ist(d,{day:"2-digit",month:"short",year:"numeric"}).toUpperCase().replace(/,/g,"")}
 function dayLabel(d){return ist(d,{weekday:"long"}).toUpperCase()}
 function timeLabel(d){return ist(d,{hour:"numeric",minute:"2-digit",hour12:true}).toUpperCase().replace(/\s+/g," ")+" IST"}
-function waLink(phone,text){var n=String(phone).replace(/\D/g,"");if(n.length===10)n="91"+n;return "https://wa.me/"+(text===undefined?n:"?text="+encodeURIComponent(text))}
+function waLink(phone,text){var n=String(phone||"").replace(/\D/g,"");if(n.length===10)n="91"+n;var url="https://wa.me/"+n;return text===undefined?url:url+"?text="+encodeURIComponent(text)}
 function summary(p,biz){
   var L=["*"+biz+" – Kozhikode*","Rates as of "+dateLabel(p.updated)+", "+timeLabel(p.updated)+(p.stale?" (may be out of date)":"")];
   p.rows.forEach(function(r){L.push(r.k+(r.sub?" "+r.sub:"")+": "+inr(r.v[0])+"/"+r.u[0].toLowerCase()+" · "+inr(r.v[1])+"/"+r.u[1].toLowerCase())});
