@@ -140,6 +140,31 @@ class ShortsDesignTests(unittest.TestCase):
                 {"id": "UCother", "snippet": {"customUrl": "@other"}}, "@SWARANAM4U", "UCexpected"
             )
 
+    def test_upload_dedupes_same_language_date_and_slot_when_title_changes(self):
+        old_native = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | വൈകിട്ട് 17:00 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
+        current_native = "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 17:00 | ഇന്നലെയേക്കാൾ ₹100/ഗ്രാം വർധന #KeralaGoldRate #Shorts"
+        old_manglish = "Innathe Swarna Vila | 27 Oct 2026 | 17:00 IST | Innale apekshichu ₹50/g koodi #KeralaGoldRate #Shorts"
+        current_english = "Today's Gold Rate | 27 Oct 2026 | 17:00 IST | UP ₹100/g vs Yesterday #KeralaGoldRate #Shorts"
+        self.assertEqual(
+            upload_shorts.title_slot_identity(old_native),
+            upload_shorts.title_slot_identity(current_native),
+        )
+        self.assertEqual(
+            upload_shorts.title_slot_identity(old_manglish)[:3],
+            upload_shorts.title_slot_identity(current_native)[:3],
+        )
+        self.assertTrue(upload_shorts.is_duplicate_slot({old_native}, current_native))
+        self.assertFalse(upload_shorts.is_duplicate_slot({old_native}, current_english))
+        self.assertFalse(upload_shorts.is_duplicate_slot({"unrelated announcement"}, current_native))
+
+    def test_private_test_does_not_block_production_slot(self):
+        comparison = rate_change_utils.compare_rate(13135, 13085)
+        normal_title = rate_change_utils.video_title("ml", self.date, "evening", comparison)
+        private_title = upload_shorts.private_test_title(normal_title)
+        changed_title = normal_title.replace("₹50", "₹100")
+        self.assertTrue(upload_shorts.is_duplicate_slot({private_title}, upload_shorts.private_test_title(changed_title)))
+        self.assertFalse(upload_shorts.is_duplicate_slot({private_title}, normal_title))
+
     def test_day_over_day_comparison_up_down_same_and_unavailable(self):
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["direction"], "up")
         self.assertEqual(rate_change_utils.compare_rate(13135, 13085)["change"], 50)
