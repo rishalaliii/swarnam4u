@@ -1,6 +1,17 @@
 name: Build Swarnam4U Shorts
 
 on:
+  # Build a fresh review artifact after production pipeline code changes; push runs never publish.
+  push:
+    branches: [main]
+    paths:
+      - "scripts/build_shorts.py"
+      - "scripts/fetch_rates.py"
+      - "scripts/shorts_preflight.py"
+      - "scripts/rate_change_utils.py"
+      - "scripts/upload_shorts.py"
+      - "requirements-shorts.txt"
+      - ".github/workflows/build-shorts.yml"
   schedule:
     # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
     # 10:10, 12:45 and 16:45 India time. GitHub Actions can be delayed.
@@ -64,6 +75,9 @@ jobs:
         run: |
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             SLOT="$INPUT_SLOT"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            # Artifact-only verification build after production code changes.
+            SLOT="morning"
           else
             case "$SCHEDULE" in
               "40 4 * * *") SLOT="morning" ;;
