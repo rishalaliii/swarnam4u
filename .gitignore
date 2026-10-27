@@ -4,3 +4,12 @@ oauth-client*.json
 youtube-refresh-token.txt
 .youtube-token*
 token.json
+
+# Local Python/build outputs
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+output/
+*.zip
