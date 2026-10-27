@@ -118,7 +118,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float]) -> str:
     v18_pawan = inr(values["18K · 750"] * 8)
     if lang == "en":
         return (
-            f"Kerala gold and silver rates for {date_en}. "
+            f"AKGSMA Kerala gold and silver rates for {date_en}. "
             f"Twenty-two carat 916 gold: {v22} per gram. "
             f"One pawan, equal to eight grams, is {v22_pawan}. "
             f"Eighteen carat 750 gold: {v18} per gram; one pawan is {v18_pawan}. "
