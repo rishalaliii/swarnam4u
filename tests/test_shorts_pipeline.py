@@ -30,7 +30,7 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("₹13,085", text)
         self.assertIn("₹1,04,680", text)
         self.assertIn("₹85,640", text)
-        self.assertIn("eight grams, one pawan", text)
+        self.assertIn("One pawan, equal to eight grams", text)
         self.assertIn("27 October 2026", text)
 
     def test_malayalam_script_has_link_prices_and_pawan_totals(self):
