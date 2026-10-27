@@ -121,7 +121,25 @@ function viaRoutes(url,valid){
       .catch(function(e){errs[i]=(e&&e.message)||"failed";throw e});
   })).then(function(x){try{ctl.abort()}catch(e){}return x},function(e){S.diag[url]="FAILED: "+errs.map(function(m,i){return "relay "+(i+1)+" "+m}).join(", ");throw e});
 }
-var okAK=function(x){return /22\s*K\s*916[\s\S]{0,40}1\s*gm/i.test(x)};
+function isTodayIstDate(iso){
+  return iso===new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});
+}
+function currentBoardDateFromAkgsma(text){
+  var m=/Today'?s Rate\s*\((\d{1,2})\/(\d{1,2})\/(\d{4})\)/i.exec(text);
+  if(!m)return null;
+  return m[3]+"-"+String(Number(m[2])).padStart(2,"0")+"-"+String(Number(m[1])).padStart(2,"0");
+}
+var okAK=function(x){
+  return currentBoardDateFromAkgsma(x)===new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"})
+    && /22\s*K\s*916[\s\S]{0,40}1\s*gm/i.test(x);
+};
+var okLiveGold=function(x){
+  var m=/\b\w+day,\s*(\d{1,2}) ([A-Z][a-z]+) (\d{4})\b/.exec(x);
+  if(!m)return false;
+  var months={January:"01",February:"02",March:"03",April:"04",May:"05",June:"06",July:"07",August:"08",September:"09",October:"10",November:"11",December:"12"};
+  var iso=m[3]+"-"+(months[m[2]]||"00")+"-"+String(Number(m[1])).padStart(2,"0");
+  return isTodayIstDate(iso)&&/AKGSMA/i.test(x)&&/22\s+Karat\s+Gold/i.test(x);
+};
 var okPage=function(x){return /(?:₹|Rs\.?)\s*\d/.test(x)};
 /* returns number of rates applied */
 S.ov={};S.liveAt=null;
@@ -176,7 +194,7 @@ S.live=function(ready){
   /* fastest and most reliable: our own Worker fetches and parses server-side (see worker/README.md) */
   var api=!WORKER?Promise.resolve(0):timeout(6000,fetch(WORKER+"/?api=rates",{cache:"no-store"})).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(j){
     return ready.then(function(){ensure();var n=0;
-      [["gold","g"],["silver","s"]].forEach(function(g){var o=j[g[0]]||{};Object.keys(o).forEach(function(k){var v=+o[k];if(!v)return;
+      [["gold","g"],["silver","s"]].forEach(function(g){if(j.date!==today)throw new Error("rate API board date does not match today in Kerala");var o=j[g[0]]||{};Object.keys(o).forEach(function(k){var v=+o[k];if(!v)return;
         var old=S.data[g[0]][k],y=!old?null:(old.date===today?old.yesterday:old.today);
         var e={today:v,yesterday:y,date:today,source:(j.source||"AKGSMA Kerala")+(/\*$/.test(k)?"":"")+" (live)"};
         if(j.calc&&j.calc.indexOf(k)>=0)e.source=(j.source||"AKGSMA Kerala")+" (calculated from 22K) (live)";
@@ -187,7 +205,7 @@ S.live=function(ready){
     /* backup pages are requested ONLY if AKGSMA did not already give this metal live today (saves ~30 requests per refresh) */
     return Promise.all([main,ready,api]).then(function(){
       if(fresh(m))return 0;
-      return Promise.all(BACKUP[m].map(function(b){return viaRoutes(b[1],okPage).then(function(t){return {t:t,n:b[0]}},function(){return null})}))
+      return Promise.all(BACKUP[m].map(function(b){var validator=/livegoldkerala\.com/i.test(b[1])?okLiveGold:okPage;return viaRoutes(b[1],validator).then(function(t){return {t:t,n:b[0]}},function(){return null})}))
         .then(function(rs){var tot=0;for(var i=0;i<rs.length;i++){if(rs[i]&&!fresh(m))tot+=apply(rs[i].t,m,rs[i].n+" (live)")}return tot})
     }).catch(function(){return 0});
   });
