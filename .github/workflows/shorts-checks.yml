@@ -9,7 +9,9 @@ on:
       - "scripts/build_shorts.py"
       - "scripts/upload_shorts.py"
       - "scripts/check_youtube_connection.py"
+      - "scripts/create_youtube_refresh_token.py"
       - "requirements-shorts.txt"
+      - "requirements-youtube-setup.txt"
       - "tests/test_shorts_pipeline.py"
       - "tests/poster.test.js"
       - "assets/poster-core.js"
@@ -49,8 +51,13 @@ jobs:
           python -m pip install -r requirements-shorts.txt
           python -m pip install --force-reinstall --no-binary=Pillow "Pillow>=10.4,<13"
           python -c "from PIL import features; assert features.check_feature('raqm'), 'Pillow RAQM shaping is required for Malayalam'"
+      - name: Install local OAuth setup dependencies
+        timeout-minutes: 3
+        run: python -m pip install -r requirements-youtube-setup.txt
+      - name: Validate local OAuth helper command
+        run: python scripts/create_youtube_refresh_token.py --help
       - name: Compile Python
-        run: python -m py_compile scripts/shorts_preflight.py scripts/fetch_rates.py scripts/rate_change_utils.py scripts/build_shorts.py scripts/upload_shorts.py scripts/check_youtube_connection.py tests/test_shorts_pipeline.py
+        run: python -m py_compile scripts/shorts_preflight.py scripts/fetch_rates.py scripts/rate_change_utils.py scripts/build_shorts.py scripts/upload_shorts.py scripts/check_youtube_connection.py scripts/create_youtube_refresh_token.py tests/test_shorts_pipeline.py
       - name: Test card design and script content
         run: python -m unittest discover -s tests -p 'test_shorts_pipeline.py' -v
       - uses: actions/setup-node@v4
