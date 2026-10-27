@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+from fractions import Fraction
 from zoneinfo import ZoneInfo
 
 from PIL import Image, ImageDraw, ImageFont, features
@@ -19,12 +20,12 @@ import edge_tts
 try:
     from rate_change_utils import (
         SLOT_TIMES, card_change_label, compare_rate, spoken_change_text,
-        video_stem, video_title,
+        video_stem, video_title, malayalam_date_text,
     )
 except ImportError:
     from scripts.rate_change_utils import (
         SLOT_TIMES, card_change_label, compare_rate, spoken_change_text,
-        video_stem, video_title,
+        video_stem, video_title, malayalam_date_text,
     )
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -36,7 +37,14 @@ WEBSITE = "swarnam4u.onrender.com"
 VOICES = {"en": "en-IN-PrabhatNeural", "ml": "ml-IN-SobhanaNeural"}
 
 def checked_run(args: list[str]) -> str:
-    p = subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    """Run a subprocess and surface useful diagnostics instead of hiding stderr."""
+    p = subprocess.run(args, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if p.returncode:
+        detail = (p.stderr or p.stdout or "").strip()
+        if len(detail) > 3000:
+            detail = detail[-3000:]
+        command = " ".join(args)
+        raise RuntimeError(f"Command failed with exit code {p.returncode}: {command}\n{detail}")
     return p.stdout.strip()
 
 def find_font(language: str, bold: bool = False, size: int = 48) -> ImageFont.FreeTypeFont:
@@ -149,7 +157,7 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
             f"Visit {WEBSITE}."
         )
     return (
-        f"{date.day} {date.strftime('%B')} തീയതിയിലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
+        f"{malayalam_date_text(date)} തീയതിയിലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
         f"22 കാരറ്റ് 916 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
         f"എട്ട് ഗ്രാം, ഒരു പവൻ {v22_pawan}. "
         f"{gold_change} "
@@ -213,8 +221,8 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     d.text((74, 215), headline, font=find_font(lang, True, 47), fill="#D8BC83")
     d.text((76, 290), intro, font=sub, fill="#C6D0DB")
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
-    date_label = date.strftime("%d %B %Y")
-    d.text((100, 407), date_label, font=find_font("en", True, 42), fill="#F6EEDD")
+    date_label = date.strftime("%d %B %Y") if lang == "en" else malayalam_date_text(date)
+    d.text((100, 407), date_label, font=find_font(lang, True, 42), fill="#F6EEDD")
     slot_clock = f"{SLOT_TIMES[slot]} IST"
     clock_font = find_font("en", True, 38)
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
@@ -277,6 +285,50 @@ def probe_duration(path: pathlib.Path) -> float:
                        "-of", "default=noprint_wrappers=1:nokey=1", str(path)])
     return float(raw)
 
+def validate_video_metadata(info: dict, label: str = "video") -> float:
+    """Fail closed unless ffprobe confirms the expected Short video and audio streams."""
+    streams = info.get("streams") or []
+    videos = [stream for stream in streams if stream.get("codec_type") == "video"]
+    audios = [stream for stream in streams if stream.get("codec_type") == "audio"]
+    if len(videos) != 1:
+        raise RuntimeError(f"{label} must contain exactly one video stream; found {len(videos)}.")
+    if len(audios) != 1:
+        raise RuntimeError(f"{label} must contain exactly one audio stream; found {len(audios)}.")
+    video, audio = videos[0], audios[0]
+    if video.get("codec_name") != "h264":
+        raise RuntimeError(f"{label} video codec must be H.264; got {video.get('codec_name')!r}.")
+    try:
+        dimensions = (int(video.get("width", 0)), int(video.get("height", 0)))
+    except (TypeError, ValueError):
+        dimensions = (0, 0)
+    if dimensions != (WIDTH, HEIGHT):
+        raise RuntimeError(f"{label} dimensions must be {WIDTH}x{HEIGHT}; got {dimensions}.")
+    if video.get("pix_fmt") != "yuv420p":
+        raise RuntimeError(f"{label} pixel format must be yuv420p; got {video.get('pix_fmt')!r}.")
+    try:
+        fps_text = video.get("avg_frame_rate") or video.get("r_frame_rate") or "0/1"
+        fps = float(Fraction(fps_text))
+    except (TypeError, ValueError, ZeroDivisionError):
+        fps = 0.0
+    if abs(fps - 30.0) > 0.1:
+        raise RuntimeError(f"{label} frame rate must be 30 fps; got {fps_text!r}.")
+    if audio.get("codec_name") != "aac":
+        raise RuntimeError(f"{label} audio codec must be AAC; got {audio.get('codec_name')!r}.")
+    try:
+        sample_rate = int(audio.get("sample_rate", 0))
+    except (TypeError, ValueError):
+        sample_rate = 0
+    if sample_rate != 48000:
+        raise RuntimeError(f"{label} audio sample rate must be 48000 Hz; got {sample_rate}.")
+    try:
+        duration = float((info.get("format") or {}).get("duration"))
+    except (TypeError, ValueError):
+        duration = 0.0
+    if not 5.0 <= duration <= 60.0:
+        raise RuntimeError(f"{label} duration must be between 5 and 60 seconds; got {duration:g}s.")
+    return duration
+
+
 def render_video(image_path: pathlib.Path, audio_path: pathlib.Path, video_path: pathlib.Path, duration: float) -> None:
     total = min(59.0, max(8.0, duration + 0.25))
     vf = "zoompan=z='min(zoom+0.00015,1.045)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,format=yuv420p"
@@ -290,12 +342,12 @@ def render_video(image_path: pathlib.Path, audio_path: pathlib.Path, video_path:
         "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
         "-movflags", "+faststart", str(video_path)
     ])
-    verify = checked_run(["ffprobe", "-v", "error", "-select_streams", "v:0",
-                          "-show_entries", "stream=width,height,codec_name",
-                          "-of", "json", str(video_path)])
-    info = json.loads(verify)["streams"][0]
-    if info.get("width") != WIDTH or info.get("height") != HEIGHT:
-        raise RuntimeError(f"Unexpected video dimensions in {video_path.name}: {info}")
+    verify = checked_run([
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration:stream=codec_name,codec_type,width,height,pix_fmt,r_frame_rate,avg_frame_rate,sample_rate",
+        "-of", "json", str(video_path)
+    ])
+    validate_video_metadata(json.loads(verify), video_path.name)
     if video_path.stat().st_size < 20_000:
         raise RuntimeError(f"Video output is suspiciously small: {video_path.name}")
 
