@@ -25,10 +25,10 @@ except ImportError:
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
 IST = ZoneInfo("Asia/Kolkata")
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"]
 SLOT_TIMES = {"morning": (10, 30), "midday": (13, 0), "evening": (17, 0)}
 WEBSITE = "swarnam4u.onrender.com"
-EXPECTED_CHANNEL_HANDLE = os.environ.get("YOUTUBE_EXPECTED_CHANNEL_HANDLE", "@SWARANAM4U").strip()
+EXPECTED_CHANNEL_HANDLE = os.environ.get("YOUTUBE_EXPECTED_CHANNEL_HANDLE", "").strip() or "@SWARANAM4U"
 
 def normalize_channel_handle(value: str | None) -> str:
     """Normalize @handle, bare handle, or a YouTube channel URL for safe comparison."""
