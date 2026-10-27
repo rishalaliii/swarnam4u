@@ -164,7 +164,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
     d.ellipse((-240, 1290, 300, 1830), fill="#172330")
     title = find_font("en", True, 76)
     sub = find_font(lang, False, 34)
-    label_font = find_font(lang, True, 37)
+    label_font = find_font(lang, True, 34)
     value_font = find_font(lang, True, 56)
     small = find_font(lang, False, 31)
     footer_font = find_font("en", True, 33)
@@ -202,20 +202,20 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], slot: str, png
 
     y = 540
     card_height = 275
-    pawan_label_font = find_font(lang, True, 25)
-    pawan_value_font = find_font("en", True, 42)
-    gram_font = find_font("en", False, 25) if lang == "en" else find_font("ml", False, 27)
-    rate_font = find_font("en", True, 51)
+    pawan_label_font = find_font(lang, True, 23)
+    pawan_value_font = find_font("en", True, 40)
+    gram_font = find_font("en", False, 24) if lang == "en" else find_font("ml", False, 24)
+    rate_font = find_font("en", True, 49)
     for label, key in labels:
         d.rounded_rectangle((65, y, 1015, y + card_height), radius=28, fill="#182330", outline="#354455", width=2)
         d.rounded_rectangle((65, y, 82, y + card_height), radius=8, fill="#C7A66A")
-        d.text((112, y + 18), label, font=label_font, fill="#E4D4B5")
-        d.text((112, y + 57), inr(values[key]), font=rate_font, fill="#FFFFFF")
-        d.text((115, y + 117), gram_text, font=gram_font, fill="#ACB9C7")
-        d.line((112, y + 152, 968, y + 152), fill="#566170", width=2)
+        d.text((112, y + 16), label, font=label_font, fill="#E4D4B5")
+        d.text((112, y + 60), inr(values[key]), font=rate_font, fill="#FFFFFF")
+        d.text((115, y + 119), gram_text, font=gram_font, fill="#ACB9C7")
+        d.line((112, y + 153, 968, y + 153), fill="#566170", width=2)
         if key != "Silver · 999":
             d.text((112, y + 161), pawan_text, font=pawan_label_font, fill="#D8BC83")
-            d.text((112, y + 191), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF")
+            d.text((112, y + 190), inr(values[key] * 8), font=pawan_value_font, fill="#FFFFFF")
         else:
             d.text((112, y + 178), silver_note, font=gram_font, fill="#D8BC83")
         y += 290
