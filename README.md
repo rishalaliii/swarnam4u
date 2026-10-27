@@ -32,7 +32,7 @@ Deploy `worker/rates-worker.js` (adds a `?api=rates` JSON endpoint that parses A
 
 ## YouTube Shorts automation for `@SWARANAM4U`
 
-The scheduled `Build Swarnam4U Shorts` workflow creates English and Malayalam 9:16 videos for the morning, midday and evening slots. It refreshes/validates the rate board first and attaches the generated MP4, audio, image and manifest as a downloadable artifact. Each MP4 is checked with `ffprobe` for exactly one H.264 video stream at 1080×1920 / 30 fps / yuv420p, exactly one AAC 48 kHz audio stream, a 5–60 second duration and a reasonable minimum file size. Build failures include command diagnostics; media that fails validation cannot reach the upload step.
+The scheduled `Build Swarnam4U Shorts` workflow creates English and Malayalam 9:16 videos for the morning, midday and evening slots (10:10, 12:30 and 16:30 IST build starts for 10:30, 13:00 and 17:00 IST target times). It refreshes/validates the rate board first and attaches the generated MP4, audio, image and manifest as a downloadable artifact. Each MP4 is checked with `ffprobe` for exactly one H.264 video stream at 1080×1920 / 30 fps / yuv420p, exactly one AAC 48 kHz audio stream, a 5–60 second duration and a reasonable minimum file size. Build failures include command diagnostics; media that fails validation cannot reach the upload step.
 
 - A manual run defaults to **build-only**. The `publish_now` input must be explicitly set to `true` to publish from a manual run.
 - Scheduled uploads remain disabled until the repository variable `YOUTUBE_AUTO_PUBLISH` is set to `true` and the two Actions secrets below are configured.
