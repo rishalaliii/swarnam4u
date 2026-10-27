@@ -153,8 +153,15 @@ def is_duplicate_slot(existing_titles: set[str], candidate_title: str) -> bool:
     return any(title_slot_identity(existing) == candidate_identity for existing in existing_titles)
 
 
-def video_description(date: dt.date) -> str:
-    """Return the common description used for every English and Malayalam Short."""
+def video_description(date: dt.date, lang: str) -> str:
+    """Keep English metadata labelled India and Malayalam metadata labelled Kerala."""
+    if lang == "en":
+        return (
+            f"India gold and silver rate update dated {date:%d %B %Y}, using published board rates.\n"
+            f"Latest rates: https://{WEBSITE}\n"
+            "Rates are shown per gram. Pawan totals are calculated from the published per-gram rates.\n"
+            "#Shorts #IndiaGoldRate #GoldRate #SilverRate #Swarnam4U"
+        )
     return (
         f"Kerala gold and silver rates dated {date:%d %B %Y}.\n"
         f"Latest rates: https://{WEBSITE}\n"
@@ -165,7 +172,7 @@ def video_description(date: dt.date) -> str:
 def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str, publish_at: dt.datetime | None, title: str, publish_mode: str) -> dict:
     if not title or len(title) > 100:
         raise ValueError(f"YouTube title must be 1–100 characters; got {len(title)}.")
-    description = video_description(date)
+    description = video_description(date, lang)
     if len(description) > 5000:
         raise ValueError(f"YouTube description exceeds 5,000 characters ({len(description)}).")
     if publish_mode == "scheduled_private" and (publish_at is None or publish_at.tzinfo is None):
@@ -180,7 +187,7 @@ def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str,
         "snippet": {
             "title": title,
             "description": description[:5000],
-            "tags": ["Shorts", "Kerala Gold Rate", "Gold Rate", "Silver Rate", "Swarnam4U"],
+            "tags": ["Shorts", "India Gold Rate" if lang == "en" else "Kerala Gold Rate", "Gold Rate", "Silver Rate", "Swarnam4U"],
             "categoryId": "22",
             "defaultLanguage": "en" if lang == "en" else "ml",
         },
