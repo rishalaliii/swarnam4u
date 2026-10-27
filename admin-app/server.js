@@ -38,7 +38,7 @@ app.use(session({
   name: "swarnam_admin",
   secret: process.env.SESSION_SECRET || "unsafe-development-secret",
   resave: false, saveUninitialized: false,
-  cookie: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", maxAge: 8 * 60 * 60 * 1000 }
+  cookie: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 8 * 60 * 60 * 1000 }
 }));
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: true, legacyHeaders: false });
 const upload = multer({
