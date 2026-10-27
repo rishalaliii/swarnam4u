@@ -40,3 +40,12 @@ The scheduled build only runs once the workflow is present on the default branch
 - The uploader schedules the English and Malayalam pair for the slot's target time, and checks the latest 50 entries in the channel's uploads playlist to avoid re-uploading matching titles. Review this behavior on a test channel before production.
 
 The publish gate stays disabled until those checks are completed. Do not edit snapshot timestamps or copy old prices forward to bypass preflight.
+
+
+## Day-over-day change and YouTube title
+- The title uses the published 22K/916 rate change per gram versus the saved previous-day value. The title includes the date, planned slot time in 24-hour IST, direction (up/down/no change), and the amount when available.
+- English title example: `Today's Gold Rate | 27 Oct 2026 | 10:30 IST | UP ₹50/g vs Yesterday #Shorts`.
+- Malayalam title example: `ഇന്നത്തെ സ്വർണ്ണവില | 27 Oct 2026 | 10:30 IST | ഇന്നലെയേക്കാൾ ₹50/g വർധിച്ചു #Shorts`.
+- 22K, 18K, and silver cards display their own previous-day change where a previous value exists. Narration calls out the main 22K movement.
+- Missing previous values show a comparison-unavailable label; no amount is fabricated. If a previous snapshot is explicitly dated and not the prior calendar date, the comparison is treated as unavailable.
+- The rate updater now preserves `yesterday_date` on refresh so future comparisons can verify the prior snapshot date.
