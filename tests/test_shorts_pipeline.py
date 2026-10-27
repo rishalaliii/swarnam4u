@@ -70,12 +70,9 @@ class ShortsDesignTests(unittest.TestCase):
         english = rate_change_utils.video_title("en", self.date, "morning", change)
         malayalam = rate_change_utils.video_title("ml", self.date, "morning", change)
         self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:30 IST | UP ₹50/g vs Yesterday #KeralaGoldRate #Shorts")
-        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 10:30 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts")
-        self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:30 IST | UP ₹50/g vs Yesterday #KeralaGoldRate #Shorts")
-        self.assertNotIn("IST", malayalam)
-        self.assertNotIn("/g", malayalam)
-        self.assertIn("ഒക്ടോബർ", malayalam)
-        self.assertIn("ഇന്നലെയേക്കാൾ", malayalam)
+        self.assertTrue(malayalam.startswith("Innathe Swarna Vila | 27 Oct 2026 | "))
+        self.assertIn("Innale apekshichu ₹50/g koodi", malayalam)
+        self.assertNotRegex(malayalam, "[\\u0D00-\\u0D7F]")
         for title in (english, malayalam):
             self.assertIn("#KeralaGoldRate", title)
             self.assertIn("#Shorts", title)
@@ -83,7 +80,7 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("13:00 IST", rate_change_utils.video_title("en", self.date, "midday", change))
         evening_malayalam_title = rate_change_utils.video_title("ml", self.date, "evening", change)
         self.assertIn("17:00", evening_malayalam_title)
-        self.assertNotIn("IST", evening_malayalam_title)
+        self.assertNotRegex(evening_malayalam_title, "[\\u0D00-\\u0D7F]")
 
     def test_all_movement_title_variants_keep_hashtags_and_fit_limit(self):
         comparisons = [
@@ -103,12 +100,13 @@ class ShortsDesignTests(unittest.TestCase):
         same = rate_change_utils.compare_rate(220, 220)
         missing = rate_change_utils.compare_rate(220, None)
         self.assertIn("No Change vs Yesterday", rate_change_utils.video_title("en", self.date, "morning", same))
-        self.assertIn("ഇന്നലെയേക്കാൾ മാറ്റമില്ല", rate_change_utils.video_title("ml", self.date, "morning", same))
+        self.assertIn("Innale pole thanne", rate_change_utils.video_title("ml", self.date, "morning", same))
         self.assertIn("Change Unavailable", rate_change_utils.video_title("en", self.date, "morning", missing))
         ml_missing = rate_change_utils.video_title("ml", self.date, "morning", missing)
-        self.assertTrue("മുൻദിവസത്തെ നിരക്ക് ലഭ്യമല്ല" in ml_missing or "മാറ്റം ലഭ്യമല്ല" in ml_missing)
+        self.assertIn("Maattam labhyamalla", ml_missing)
+        self.assertNotRegex(ml_missing, "[\\u0D00-\\u0D7F]")
         self.assertLessEqual(len(ml_missing), 100)
-        self.assertIn("ഒക്ടോബർ", ml_missing)
+        self.assertIn("27 Oct 2026", ml_missing)
 
     def test_titles_and_filenames_are_language_specific_and_time_specific(self):
         change = rate_change_utils.compare_rate(13135, 13085)

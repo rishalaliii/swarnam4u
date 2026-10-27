@@ -96,6 +96,21 @@ def title_change_text(comparison: dict, lang: str, compact: bool = False) -> str
     return "Change N/A" if compact else "Change Unavailable"
 
 
+def manglish_title_change_text(comparison: dict, compact: bool = False) -> str:
+    """Return a romanized Malayalam (Manglish) rate-movement phrase for YouTube titles."""
+    direction = comparison.get("direction", "unavailable")
+    amount = rate_change_amount(comparison)
+    if direction == "up":
+        prefix = "" if compact else "Innale apekshichu "
+        return f"{prefix}{amount}/g koodi"
+    if direction == "down":
+        prefix = "" if compact else "Innale apekshichu "
+        return f"{prefix}{amount}/g kuranju"
+    if direction == "no_change":
+        return "Maattamilla" if compact else "Innale pole thanne"
+    return "Maattam labhyamalla"
+
+
 def spoken_change_text(comparison: dict, lang: str) -> str:
     """Short sentence fragment for narration; only states a change when a prior value exists."""
     direction = comparison.get("direction", "unavailable")
@@ -138,30 +153,21 @@ def video_title(lang: str, date: dt.date, slot: str, comparison: dict) -> str:
             raise ValueError(f"Generated English title exceeds YouTube's 100-character limit ({len(title)} characters).")
         return title
 
-    malayalam_months = {
-        1: "ജനുവരി", 2: "ഫെബ്രുവരി", 3: "മാർച്ച്", 4: "ഏപ്രിൽ",
-        5: "മേയ്", 6: "ജൂൺ", 7: "ജൂലൈ", 8: "ഓഗസ്റ്റ്",
-        9: "സെപ്റ്റംബർ", 10: "ഒക്ടോബർ", 11: "നവംബർ", 12: "ഡിസംബർ",
-    }
-    date_text = f"{date.day} {malayalam_months[date.month]} {date.year}"
-    local_times = {
-        "morning": f"രാവിലെ {SLOT_TIMES[slot]}",
-        "midday": f"ഉച്ചയ്ക്ക് {SLOT_TIMES[slot]}",
-        "evening": f"വൈകിട്ട് {SLOT_TIMES[slot]}",
-    }
-    time_options = [local_times[slot], SLOT_TIMES[slot]]
+    # The Malayalam-language title is intentionally romanized (Manglish), not Malayalam script.
+    date_text = date.strftime("%d %b %Y")
+    time_options = [f"{SLOT_TIMES[slot]} IST", SLOT_TIMES[slot]]
     movement_options = [
-        title_change_text(comparison, "ml"),
-        title_change_text(comparison, "ml", compact=True),
+        manglish_title_change_text(comparison),
+        manglish_title_change_text(comparison, compact=True),
     ]
-    prefix = "ഇന്നത്തെ സ്വർണ്ണവില"
-    # Prefer full Malayalam time and yesterday comparison; shorten only as needed for YouTube's limit.
+    prefix = "Innathe Swarna Vila"
+    # Keep the title in Latin letters and shorten only as needed for YouTube's 100-character limit.
     for movement in movement_options:
         for time_text in time_options:
             title = f"{prefix} | {date_text} | {time_text} | {movement} {hashtags}"
             if len(title) <= 100:
                 return title
-    raise ValueError("Generated Malayalam title exceeds YouTube's 100-character limit.");
+    raise ValueError("Generated Manglish title exceeds YouTube's 100-character limit.");
 
 
 
