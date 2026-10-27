@@ -17,6 +17,14 @@ on:
           - morning
           - midday
           - evening
+      publish_now:
+        description: "For a manual run, also schedule the videos on YouTube (otherwise build files only)"
+        required: true
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "false"
 
 permissions:
   contents: read
@@ -68,10 +76,10 @@ jobs:
           echo "Building slot: $SLOT"
       - name: Build English + Malayalam Shorts
         env:
-          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_AUTO_PUBLISH }}
+          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_AUTO_PUBLISH == 'true' && (github.event_name == 'schedule' || inputs.publish_now == 'true') }}
         run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
       - name: Publish to YouTube (explicit opt-in only)
-        if: vars.YOUTUBE_AUTO_PUBLISH == 'true'
+        if: vars.YOUTUBE_AUTO_PUBLISH == 'true' && (github.event_name == 'schedule' || inputs.publish_now == 'true')
         env:
           SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
           YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
