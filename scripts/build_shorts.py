@@ -148,8 +148,14 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
             f"Pawan amounts are calculated from per-gram rates. "
             f"Visit {WEBSITE}."
         )
+    malayalam_months = {
+        1: "ജനുവരി", 2: "ഫെബ്രുവരി", 3: "മാർച്ച്", 4: "ഏപ്രിൽ",
+        5: "മേയ്", 6: "ജൂൺ", 7: "ജൂലൈ", 8: "ഓഗസ്റ്റ്",
+        9: "സെപ്റ്റംബർ", 10: "ഒക്ടോബർ", 11: "നവംബർ", 12: "ഡിസംബർ",
+    }
+    ml_date = f"{date.day} {malayalam_months[date.month]} {date.year}"
     return (
-        f"{date.day} {date.strftime('%B')} തീയതിയിലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
+        f"{ml_date}-ലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
         f"22 കാരറ്റ് 916 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
         f"എട്ട് ഗ്രാം, ഒരു പവൻ {v22_pawan}. "
         f"{gold_change} "
@@ -213,8 +219,18 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
     d.text((74, 215), headline, font=find_font(lang, True, 47), fill="#D8BC83")
     d.text((76, 290), intro, font=sub, fill="#C6D0DB")
     d.rounded_rectangle((66, 365, 1014, 500), radius=28, fill="#1D2937", outline="#657184", width=2)
-    date_label = date.strftime("%d %B %Y")
-    d.text((100, 407), date_label, font=find_font("en", True, 42), fill="#F6EEDD")
+    if lang == "ml":
+        malayalam_months = {
+            1: "ജനുവരി", 2: "ഫെബ്രുവരി", 3: "മാർച്ച്", 4: "ഏപ്രിൽ",
+            5: "മേയ്", 6: "ജൂൺ", 7: "ജൂലൈ", 8: "ഓഗസ്റ്റ്",
+            9: "സെപ്റ്റംബർ", 10: "ഒക്ടോബർ", 11: "നവംബർ", 12: "ഡിസംബർ",
+        }
+        date_label = f"{date.day} {malayalam_months[date.month]} {date.year}"
+        date_font = find_font("ml", True, 42)
+    else:
+        date_label = date.strftime("%d %B %Y")
+        date_font = find_font("en", True, 42)
+    d.text((100, 407), date_label, font=date_font, fill="#F6EEDD")
     slot_clock = f"{SLOT_TIMES[slot]} IST"
     clock_font = find_font("en", True, 38)
     clock_width = d.textbbox((0, 0), slot_clock, font=clock_font)[2]
@@ -243,7 +259,7 @@ def draw_card(lang: str, date: dt.date, values: dict[str, float], comparisons: d
         label_text, change_amount = card_change_label(comparisons[key], lang)
         d.text((112, y + 242), label_text, font=change_font, fill="#D8BC83")
         if change_amount:
-            change_value = f"{change_amount}/g"
+            change_value = f"{change_amount}/ગ્રാം" if lang == "ml" else f"{change_amount}/g"
             amount_width = d.textbbox((0, 0), change_value, font=change_amount_font)[2]
             d.text((970 - amount_width, y + 241), change_value, font=change_amount_font, fill="#FFFFFF")
         y += 290
