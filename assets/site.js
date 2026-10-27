@@ -152,7 +152,7 @@ var BACKUP={};
 S.metals=S.metals||["gold","silver","platinum"];
 function pruneBackup(){BACKUP={};S.metals.forEach(function(m){if(BACKUP0[m])BACKUP[m]=BACKUP0[m]})}
 function apply(text,only,src){
-  var n=0,today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"}),ak=/AKGSMA/.test(src);
+  var n=0,today=new Date().toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"}),ak=/^AKGSMA Kerala/i.test(src);
   (ak?AKPAT:PAT).forEach(function(p){
     if(only&&p[0]!==only)return;
     var o=S.data[p[0]][p[1]];
