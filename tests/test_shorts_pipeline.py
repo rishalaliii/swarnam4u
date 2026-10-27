@@ -106,7 +106,7 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("Maattam labhyamalla", ml_missing)
         self.assertNotRegex(ml_missing, "[\\u0D00-\\u0D7F]")
         self.assertLessEqual(len(ml_missing), 100)
-        self.assertIn("ഒക്ടോബർ", ml_missing)
+        self.assertIn("27 Oct 2026", ml_missing)
 
     def test_titles_and_filenames_are_language_specific_and_time_specific(self):
         change = rate_change_utils.compare_rate(13135, 13085)
