@@ -341,7 +341,7 @@ def render_video(image_path: pathlib.Path, audio_path: pathlib.Path, video_path:
         "-vf", vf, "-t", f"{total:.2f}", "-shortest",
         "-c:v", "libx264", "-preset", "veryslow", "-tune", "stillimage", "-crf", "10", "-profile:v", "high",
         "-pix_fmt", "yuv420p", "-r", "30", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
-        "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
+        "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
         "-movflags", "+faststart", str(video_path)
     ])
     verify = checked_run([
