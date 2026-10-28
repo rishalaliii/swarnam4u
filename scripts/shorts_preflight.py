@@ -98,7 +98,7 @@ def fetch_page_text(url: str, allow_mirror: bool) -> str:
             with urllib.request.urlopen(req, timeout=30) as response:
                 raw = response.read().decode("utf-8", "replace")
             text = html.unescape(re.sub(r"<[^>]+>", " ", raw))
-            text = re.sub(r"\\s+", " ", text)
+            text = re.sub(r"\s+", " ", text)
             if len(text) > 100:
                 return text
             errors.append(f"{target}: response too short")
