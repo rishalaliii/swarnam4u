@@ -15,9 +15,9 @@ on:
   schedule:
     # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
     # 10:10, 12:30 and 16:30 IST. Earlier midday/evening starts leave more room for delayed runners.
-    - cron: "40 4 * * *"   # 10:10 IST -> morning slot
-    - cron: "0 7 * * *"    # 12:30 IST -> midday slot
-    - cron: "0 11 * * *"   # 16:30 IST -> evening slot
+    - cron: "42 4 * * *"   # 10:12 IST -> morning slot
+    - cron: "32 7 * * *"   # 12:32 IST -> midday slot
+    - cron: "32 11 * * *"  # 16:32 IST -> evening slot
   workflow_dispatch:
     inputs:
       slot:
@@ -45,7 +45,7 @@ concurrency:
   # Serialize the same scheduled/manual slot, but never let a push-only artifact build
   # block a future scheduled publication if a runner stalls.
   # Map scheduled and manual runs to the same slot lock; push-only review builds keep a unique group.
-  group: swarnam4u-shorts-build-${{ inputs.slot || (github.event.schedule == '40 4 * * *' && 'morning') || (github.event.schedule == '0 7 * * *' && 'midday') || (github.event.schedule == '0 11 * * *' && 'evening') || github.run_id }}
+  group: swarnam4u-shorts-build-${{ inputs.slot || (github.event.schedule == '42 4 * * *' && 'morning') || (github.event.schedule == '32 7 * * *' && 'midday') || (github.event.schedule == '32 11 * * *' && 'evening') || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -91,9 +91,9 @@ jobs:
             SLOT="morning"
           else
             case "$SCHEDULE" in
-              "40 4 * * *") SLOT="morning" ;;
-              "0 7 * * *") SLOT="midday" ;;
-              "0 11 * * *") SLOT="evening" ;;
+              "42 4 * * *") SLOT="morning" ;;
+              "32 7 * * *") SLOT="midday" ;;
+              "32 11 * * *") SLOT="evening" ;;
               *) echo "Unknown schedule: $SCHEDULE" >&2; exit 2 ;;
             esac
           fi
