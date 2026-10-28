@@ -5,9 +5,9 @@ import datetime as dt
 import math
 
 SLOT_TIMES = {
-    "morning": "10:30",
-    "midday": "13:00",
-    "evening": "17:00",
+    "morning": "10:45",
+    "midday": "13:15",
+    "evening": "17:15",
 }
 
 MALAYALAM_MONTHS = {
