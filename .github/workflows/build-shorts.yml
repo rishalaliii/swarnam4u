@@ -1,17 +1,8 @@
 name: Build Swarnam4U Shorts
 
 on:
-  # Build a fresh review artifact after production pipeline code changes; push runs never publish.
-  push:
-    branches: [main]
-    paths:
-      - "scripts/build_shorts.py"
-      - "scripts/fetch_rates.py"
-      - "scripts/shorts_preflight.py"
-      - "scripts/rate_change_utils.py"
-      - "scripts/upload_shorts.py"
-      - "requirements-shorts.txt"
-      - ".github/workflows/build-shorts.yml"
+  # Fetch rates and build videos only for the scheduled publication slots.
+  # Manual workflow_dispatch remains available for an intentional test/build.
   schedule:
     # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
     # 10:10, 12:30 and 16:30 IST. Earlier midday/evening starts leave more room for delayed runners.
