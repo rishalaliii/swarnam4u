@@ -83,7 +83,7 @@ def ensure_primary_source_allowed() -> None:
     if not robots_allows(robots_text):
         raise ValueError("AKGSMA robots.txt disallows this user-agent; preflight will not fetch the board.")
 
-def fetch_page_text(url: str, allow_mirror: bool) -> str:
+def fetch_page_text(url: str, allow_mirror: bool, must: str) -> str:
     """Fetch a source with direct/browser/mirror retries like fetch_rates.py."""
     attempts = [(url, UA), (url, BROWSER_UA)]
     if allow_mirror:
@@ -99,9 +99,9 @@ def fetch_page_text(url: str, allow_mirror: bool) -> str:
                 raw = response.read().decode("utf-8", "replace")
             text = html.unescape(re.sub(r"<[^>]+>", " ", raw))
             text = re.sub(r"\s+", " ", text)
-            if len(text) > 100:
+            if len(text) > 100 and re.search(must, text, re.I | re.S):
                 return text
-            errors.append(f"{target}: response too short")
+            errors.append(f"{target}: expected live-rate text not found")
         except Exception as exc:
             errors.append(f"{target}: {exc}")
     raise ValueError("all fetch routes failed: " + " | ".join(errors))
@@ -119,7 +119,7 @@ def fetch_board() -> tuple[str, dict[str, float | None]]:
         try:
             if is_primary:
                 ensure_primary_source_allowed()
-            text = fetch_page_text(url, allow_mirror=not is_primary)
+            text = fetch_page_text(url, allow_mirror=not is_primary, must=r"Today.?s Rate" if is_primary else r"(?=.*AKGSMA)(?=.*22 Karat Gold)(?=.*18 Karat)(?=.*Ag 999)")
             board_date, rates = parser(text)
             required = ("gold_22k_916", "gold_18k_750", "silver_999")
             if any(rates.get(key) is None or rates[key] <= 0 for key in required):
