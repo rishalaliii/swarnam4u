@@ -20,12 +20,13 @@ on:
           - midday
           - evening
       publish_mode:
-        description: "Build only, schedule privately using automation, or publish both videos publicly now"
+        description: "Build only, schedule privately, publish publicly now, or scheduled_release (identical to a scheduled run; used by the external timer)"
         required: true
         type: choice
         options:
           - build_only
           - schedule_private
+          - scheduled_release
           - public_now
         default: build_only
 
@@ -82,7 +83,7 @@ jobs:
           echo "::error::Live rates could not be fetched and validated after 3 attempts. Refusing to publish stale rates."
           exit 1
       - name: Validate scheduled publishing configuration
-        if: github.event_name == 'schedule' && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true'
+        if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'scheduled_release')) && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true'
         env:
           YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
@@ -103,10 +104,10 @@ jobs:
           print("Scheduled publishing configuration is present; OAuth/channel authorization will be verified by the uploader.")
           PY
       - name: Scheduled publishing is enabled unless the emergency stop is active
-        if: github.event_name == 'schedule' && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true'
+        if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'scheduled_release')) && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true'
         run: echo "Scheduled publishing is enabled. The emergency stop remains authoritative."
       - name: Explain emergency publishing stop
-        if: github.event_name == 'schedule' && vars.YOUTUBE_UPLOAD_KILL_SWITCH == 'true'
+        if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'scheduled_release')) && vars.YOUTUBE_UPLOAD_KILL_SWITCH == 'true'
         run: echo "::warning::YOUTUBE_UPLOAD_KILL_SWITCH is true. Videos may be built, but all YouTube uploads are intentionally blocked."
       - name: Resolve the scheduled slot
         id: slot
@@ -131,15 +132,15 @@ jobs:
         env:
           # The manifest is upload-enabled only when this run explicitly requests publishing
           # or is a scheduled run with auto-publishing enabled, and the kill switch is off.
-          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && ((github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && (inputs.publish_mode == 'schedule_private' || inputs.publish_mode == 'public_now') && (inputs.publish_mode == 'public_now' || vars.YOUTUBE_AUTO_PUBLISH == 'true')) ) }}
+          YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && (((github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'scheduled_release'))) || (github.event_name == 'workflow_dispatch' && (inputs.publish_mode == 'schedule_private' || inputs.publish_mode == 'public_now') && (inputs.publish_mode == 'public_now' || vars.YOUTUBE_AUTO_PUBLISH == 'true')) ) }}
           SHORTS_PUBLISH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'public_now' && 'public_now' || 'scheduled_private' }}
-          SHORTS_USE_CURRENT_TIME: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+          SHORTS_USE_CURRENT_TIME: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_mode != 'scheduled_release' && 'true' || 'false' }}
         run: python scripts/build_shorts.py --slot "${{ steps.slot.outputs.slot }}"
       - name: Emergency stop — uploads disabled
         if: vars.YOUTUBE_UPLOAD_KILL_SWITCH == 'true'
         run: echo "Emergency stop is ON. Videos were generated, but all YouTube uploads are blocked."
       - name: Publish to YouTube
-        if: vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'schedule_private' && vars.YOUTUBE_AUTO_PUBLISH == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'public_now'))
+        if: vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && ((github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'scheduled_release')) || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'schedule_private' && vars.YOUTUBE_AUTO_PUBLISH == 'true') || (github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'public_now'))
         env:
           SHORTS_SLOT: ${{ steps.slot.outputs.slot }}
           SHORTS_PUBLISH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'public_now' && 'public_now' || 'scheduled_private' }}
