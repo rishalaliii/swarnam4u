@@ -41,6 +41,26 @@ def parse_board_text(text: str) -> tuple[str, dict[str, float | None]]:
     }
     return board_date, rates
 
+def parse_livegold_text(text: str) -> tuple[str, dict[str, float | None]]:
+    """Parse the dated LiveGold Kerala mirror of the AKGSMA board."""
+    text = re.sub(r"\\s+", " ", text)
+    if not re.search(r"AKGSMA", text, re.I):
+        raise ValueError("LiveGold page does not identify the AKGSMA board.")
+    date_match = re.search(r"\\b\\w+day,\\s*(\\d{1,2}) ([A-Z][a-z]+) (\\d{4})", text)
+    months = {m: i for i, m in enumerate("January February March April May June July August September October November December".split(), 1)}
+    if not date_match or date_match[2] not in months:
+        raise ValueError("Could not parse LiveGold board date.")
+    board_date = dt.date(int(date_match[3]), months[date_match[2]], int(date_match[1])).isoformat()
+    def rate(pattern: str) -> float | None:
+        m = re.search(pattern, text, re.I)
+        return float(m.group(1).replace(",", "")) if m else None
+    return board_date, {
+        "gold_22k_916": rate(r"22 Karat Gold.{0,60}?₹\\s*([\\d,]+)"),
+        "gold_18k_750": rate(r"18 Karat\\s*750.{0,40}?₹\\s*([\\d,]+)"),
+        "silver_999": rate(r"Ag 999.{0,60}?₹\\s*([\\d,]+(?:\\.\\d+)?)\\s*/\\s*g"),
+        "silver_925_published": None,
+    }
+
 def robots_allows(robots_text: str, url: str = URL + "/") -> bool:
     parser = urllib.robotparser.RobotFileParser()
     parser.set_url(URL + "/robots.txt")
@@ -62,13 +82,31 @@ def ensure_primary_source_allowed() -> None:
         raise ValueError("AKGSMA robots.txt disallows this user-agent; preflight will not fetch the board.")
 
 def fetch_board() -> tuple[str, dict[str, float | None]]:
-    ensure_primary_source_allowed()
-    req = urllib.request.Request(URL, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=25) as response:
-        html = response.read().decode("utf-8", "replace")
-    text = re.sub(r"<[^>]+>", " ", html)
-    text = text.replace("&nbsp;", " ").replace("&#8377;", "₹").replace("&#39;", "'").replace("&amp;", "&")
-    return parse_board_text(text)
+    """Try the permitted primary board first, then the same-board LiveGold mirror."""
+    errors: list[str] = []
+    sources = [
+        ("AKGSMA", URL, parse_board_text, True),
+        ("LiveGold Kerala mirror", "https://www.livegoldkerala.com/kozhikode", parse_livegold_text, False),
+        ("LiveGold Kerala mirror", "https://www.livegoldkerala.com/", parse_livegold_text, False),
+    ]
+    for name, url, parser, is_primary in sources:
+        try:
+            if is_primary:
+                ensure_primary_source_allowed()
+            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=25) as response:
+                html = response.read().decode("utf-8", "replace")
+            text = re.sub(r"<[^>]+>", " ", html)
+            text = text.replace("&nbsp;", " ").replace("&#8377;", "₹").replace("&#39;", "'").replace("&amp;", "&")
+            result = parser(text)
+            board_date, rates = result
+            required = ("gold_22k_916", "gold_18k_750", "silver_999")
+            if any(rates.get(key) is None or rates[key] <= 0 for key in required):
+                raise ValueError("one or more required rates are missing")
+            return board_date, rates
+        except Exception as exc:
+            errors.append(f"{name} ({url}) failed: {exc}")
+    raise ValueError("All live board sources failed. " + " | ".join(errors))
 
 def main() -> int:
     now = dt.datetime.now(IST)
