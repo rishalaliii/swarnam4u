@@ -7,8 +7,8 @@ on:
     # AKGSMA usually publishes around 10:00 IST. Keep a build/upload buffer before each release.
     # Scheduled releases are 10:45, 13:15 and 17:15 IST to reduce late-upload failures.
     - cron: "42 4 * * *"   # 10:12 IST -> morning slot, 33-minute buffer
-    - cron: "32 7 * * *"   # 12:32 IST -> midday slot, 43-minute buffer
-    - cron: "32 11 * * *"  # 16:32 IST -> evening slot, 43-minute buffer
+    - cron: "2 7 * * *"    # 12:32 IST -> midday slot, 43-minute buffer
+    - cron: "2 11 * * *"   # 16:32 IST -> evening slot, 43-minute buffer
   workflow_dispatch:
     inputs:
       slot:
@@ -35,7 +35,7 @@ permissions:
 concurrency:
   # Serialize the same scheduled/manual slot so duplicate runs cannot publish twice.
   # Scheduled and manual runs share a slot lock; unrelated manual runs get a unique group.
-  group: swarnam4u-shorts-build-${{ inputs.slot || (github.event.schedule == '42 4 * * *' && 'morning') || (github.event.schedule == '32 7 * * *' && 'midday') || (github.event.schedule == '32 11 * * *' && 'evening') || github.run_id }}
+  group: swarnam4u-shorts-build-${{ inputs.slot || (github.event.schedule == '42 4 * * *' && 'morning') || (github.event.schedule == '2 7 * * *' && 'midday') || (github.event.schedule == '2 11 * * *' && 'evening') || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -103,8 +103,8 @@ jobs:
           else
             case "$SCHEDULE" in
               "42 4 * * *") SLOT="morning" ;;
-              "32 7 * * *") SLOT="midday" ;;
-              "32 11 * * *") SLOT="evening" ;;
+              "2 7 * * *") SLOT="midday" ;;
+              "2 11 * * *") SLOT="evening" ;;
               *) echo "Unknown schedule: $SCHEDULE" >&2; exit 2 ;;
             esac
           fi
