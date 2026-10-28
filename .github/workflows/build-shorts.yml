@@ -63,10 +63,24 @@ jobs:
           python -m pip install -r requirements-shorts.txt
           python -m pip install --force-reinstall --no-binary=Pillow "Pillow>=10.4,<13"
           python -c "from PIL import features; assert features.check_feature('raqm'), 'Pillow RAQM shaping is required for Malayalam'"
-      - name: Refresh working copy from live AKGSMA board
-        run: python scripts/fetch_rates.py
-      - name: Validate live board date and saved rates
-        run: python scripts/shorts_preflight.py
+      - name: Refresh rates and validate live board (retry transient source failures)
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Live-rate fetch/preflight attempt $attempt of 3"
+            if python scripts/fetch_rates.py && python scripts/shorts_preflight.py; then
+              echo "Live rates fetched and preflight passed."
+              exit 0
+            fi
+            if [[ "$attempt" -lt 3 ]]; then
+              echo "::warning::Live-rate attempt $attempt failed; retrying in 25 seconds."
+              sleep 25
+            fi
+          done
+          echo "::error::Live rates could not be fetched and validated after 3 attempts. Refusing to publish stale rates."
+          exit 1
       - name: Validate scheduled publishing configuration
         if: github.event_name == 'schedule' && vars.YOUTUBE_AUTO_PUBLISH == 'true' && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true'
         env:
@@ -88,9 +102,14 @@ jobs:
               sys.exit(1)
           print("Scheduled publishing configuration is present; OAuth/channel authorization will be verified by the uploader.")
           PY
-      - name: Explain why scheduled publishing is disabled
+      - name: Require automatic publishing to be enabled
         if: github.event_name == 'schedule' && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && vars.YOUTUBE_AUTO_PUBLISH != 'true'
-        run: echo "::warning::Scheduled video publishing is disabled because repository variable YOUTUBE_AUTO_PUBLISH is not exactly 'true'. Videos may be built, but no YouTube upload will occur."
+        run: |
+          echo "::error::Scheduled publishing is not enabled. Set repository variable YOUTUBE_AUTO_PUBLISH to the exact string true. This run is stopped instead of silently generating videos without publishing."
+          exit 1
+      - name: Explain emergency publishing stop
+        if: github.event_name == 'schedule' && vars.YOUTUBE_UPLOAD_KILL_SWITCH == 'true'
+        run: echo "::warning::YOUTUBE_UPLOAD_KILL_SWITCH is true. Videos may be built, but all YouTube uploads are intentionally blocked."
       - name: Resolve the scheduled slot
         id: slot
         env:
