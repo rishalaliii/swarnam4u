@@ -192,8 +192,22 @@ app.get("/api/dashboard", requireAuth, async (_req, res) => {
     if (c) status.channel = { title: c.snippet?.title, id: c.id };
   } catch (e) { status.warnings.push("YouTube: " + e.message); }
   status.autoPublishConfigured = !!process.env.GITHUB_TOKEN;
+  try{const[kill,automatic]=await Promise.all([getGithubVariable("YOUTUBE_UPLOAD_KILL_SWITCH"),getGithubVariable("YOUTUBE_AUTO_PUBLISH")]);status.publishing={killSwitch:kill==="true",autoPublish:automatic==="true",configured:kill!==null||automatic!==null};}catch(e){status.publishing={configured:false,warning:e.message};}
+  try{const{jobId}=cronConfig(),r=await cronRequest("/jobs/"+encodeURIComponent(jobId));status.cronjob=safeCronJob(r.jobDetails||r.job||r);}catch(e){status.cronjob={configured:false,warning:e.message};}
   res.json(status);
 });
+
+
+function cronConfig(){const apiKey=process.env.CRONJOB_API_KEY||"",jobId=String(process.env.CRONJOB_JOB_ID||"").trim();if(!apiKey||!jobId)throw new Error("Cron-job.org is not configured. Set CRONJOB_API_KEY and CRONJOB_JOB_ID in Render environment.");if(!/^\d+$/.test(jobId))throw new Error("CRONJOB_JOB_ID must be numeric.");return{apiKey,jobId};}
+async function cronRequest(pathname,options={}){const{apiKey}=cronConfig();const r=await fetch("https://api.cron-job.org"+pathname,{...options,headers:{Authorization:"Bearer "+apiKey,Accept:"application/json",...(options.body?{"Content-Type":"application/json"}:{}),...(options.headers||{})}});const raw=await r.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{data={message:raw.slice(0,250)};}if(!r.ok)throw new Error("cron-job.org API "+r.status+": "+(data.message||data.error||r.statusText));return data;}
+function safeCronJob(j){if(!j)return null;return{jobId:j.jobId,title:j.title,enabled:!!j.enabled,url:j.url,lastStatus:j.lastStatus,lastDuration:j.lastDuration,lastExecution:j.lastExecution,nextExecution:j.nextExecution,requestMethod:j.requestMethod,schedule:j.schedule,requestTimeout:j.requestTimeout};}
+async function setGithubVariable(name,value){const c=githubConfig(),url="/repos/"+c.owner+"/"+c.repo+"/actions/variables/"+encodeURIComponent(name);try{await gh(url,{method:"PATCH",body:JSON.stringify({name,value})});}catch(e){if(!String(e.message).includes(" 404:"))throw e;await gh("/repos/"+c.owner+"/"+c.repo+"/actions/variables",{method:"POST",body:JSON.stringify({name,value})});}}
+async function getGithubVariable(name){const c=githubConfig();try{return(await gh("/repos/"+c.owner+"/"+c.repo+"/actions/variables/"+encodeURIComponent(name))).value;}catch(e){if(String(e.message).includes(" 404:"))return null;throw e;}}
+async function setPublishingState(stopped,actor){await setGithubVariable("YOUTUBE_UPLOAD_KILL_SWITCH",stopped?"true":"false");appendLocalLog("audit.json",{actor,action:stopped?"publishing_emergency_stop_requested":"publishing_resume_requested",target:"GitHub Actions repository variables"});await setGithubVariable("YOUTUBE_AUTO_PUBLISH",stopped?"false":"true");}
+app.get("/api/github/publishing",requireAuth,async(_req,res)=>{try{const[killSwitch,autoPublish]=await Promise.all([getGithubVariable("YOUTUBE_UPLOAD_KILL_SWITCH"),getGithubVariable("YOUTUBE_AUTO_PUBLISH")]);res.json({ok:true,killSwitch:killSwitch==="true",autoPublish:autoPublish==="true",configured:killSwitch!==null||autoPublish!==null,note:"Reads the repository variables used by build-shorts.yml. Changes affect future workflow evaluations only."});}catch(e){res.status(502).json({error:e.message});}});
+app.get("/api/cronjob",requireAuth,async(_req,res)=>{try{const{jobId}=cronConfig(),r=await cronRequest("/jobs/"+encodeURIComponent(jobId)),job=r.jobDetails||r.job||r,h=await cronRequest("/jobs/"+encodeURIComponent(jobId)+"/history").catch(e=>({_historyError:e.message}));res.json({configured:true,job:safeCronJob(job),history:(h.history||[]).slice(0,8).map(x=>({identifier:x.identifier,date:x.date,datePlanned:x.datePlanned,duration:x.duration,status:x.status,statusText:x.statusText,httpStatus:x.httpStatus})),historyWarning:h._historyError||null});}catch(e){res.status(503).json({configured:false,error:e.message});}});
+app.post("/api/cronjob/control",requireAuth,sameOrigin,async(req,res)=>{const enabled=req.body?.enabled;if(typeof enabled!=="boolean")return res.status(400).json({error:"enabled must be true or false."});try{const{jobId}=cronConfig();await cronRequest("/jobs/"+encodeURIComponent(jobId),{method:"PATCH",body:JSON.stringify({job:{enabled}})});appendLocalLog("audit.json",{actor:req.session.username,action:enabled?"cron_job_enabled":"cron_job_disabled",jobId});const r=await cronRequest("/jobs/"+encodeURIComponent(jobId));res.json({ok:true,job:safeCronJob(r.jobDetails||r.job||r),message:enabled?"External cron job enabled.":"External cron job paused."});}catch(e){res.status(502).json({error:e.message});}});
+app.post("/api/cronjob/run-shorts",requireAuth,sameOrigin,async(req,res)=>{const slot=String(req.body?.slot||""),mode=String(req.body?.publishMode||"build_only");if(!["morning","midday","evening"].includes(slot))return res.status(400).json({error:"Choose morning, midday, or evening."});if(!["build_only","schedule_private","scheduled_release","public_now"].includes(mode))return res.status(400).json({error:"Invalid publishing mode."});if(mode==="public_now"&&!req.body?.confirmPublic)return res.status(400).json({error:"Explicit public-publish confirmation is required."});try{const c=githubConfig(),file=".github/workflows/build-shorts.yml",allow=(process.env.GITHUB_ALLOWED_WORKFLOWS||"").split(",").map(s=>s.trim()).filter(Boolean);if(!allow.includes(file))return res.status(403).json({error:"Add .github/workflows/build-shorts.yml to GITHUB_ALLOWED_WORKFLOWS in Render before dispatching Shorts."});const d=await gh("/repos/"+c.owner+"/"+c.repo+"/actions/workflows?per_page=100"),wf=(d.workflows||[]).find(w=>w.path===file&&w.state==="active");if(!wf)return res.status(404).json({error:"Active Shorts workflow not found."});await gh("/repos/"+c.owner+"/"+c.repo+"/actions/workflows/"+wf.id+"/dispatches",{method:"POST",body:JSON.stringify({ref:"main",inputs:{slot,publish_mode:mode}})});appendLocalLog("audit.json",{actor:req.session.username,action:"shorts_workflow_dispatch_requested",workflow:file,slot,publishMode:mode});res.json({ok:true,message:"Shorts workflow dispatch accepted by GitHub. Check Actions before assuming upload succeeded.",slot,publishMode:mode});}catch(e){res.status(502).json({error:e.message});}});
 
 app.get("/api/github/workflows", requireAuth, async (_req, res) => {
   try {
@@ -228,22 +242,7 @@ async function setGithubSecret(name, value) {
   const encrypted_value = sodium.to_base64(sealed, sodium.base64_variants.ORIGINAL);
   await gh(base + encodeURIComponent(name), { method: "PUT", body: JSON.stringify({ encrypted_value, key_id: key.key_id }) });
 }
-app.post("/api/github/publishing", requireAuth, sameOrigin, async (req, res) => {
-  const mode = String(req.body?.mode || "");
-  if (!["stop", "resume"].includes(mode)) return res.status(400).json({ error: "Invalid action." });
-  try {
-    if (mode === "stop") {
-      await setGithubSecret("YOUTUBE_UPLOAD_KILL_SWITCH", "true");
-      appendLocalLog("audit.json", { actor: req.session.username, action: "publishing_emergency_stop_requested" });
-      await setGithubSecret("YOUTUBE_AUTO_PUBLISH", "false");
-      return res.json({ ok: true, message: "Kill-switch secret set to true and auto-publish set to false. This affects future runs; it cannot cancel a job already uploading." });
-    }
-    await setGithubSecret("YOUTUBE_UPLOAD_KILL_SWITCH", "false");
-    appendLocalLog("audit.json", { actor: req.session.username, action: "publishing_resume_requested" });
-    await setGithubSecret("YOUTUBE_AUTO_PUBLISH", "true");
-    res.json({ ok: true, message: "Publishing secrets enabled for future runs. Confirm the workflow checks the kill switch and expected channel before upload." });
-  } catch (e) { res.status(502).json({ error: e.message }); }
-});
+app.post("/api/github/publishing",requireAuth,sameOrigin,async(req,res)=>{const mode=String(req.body?.mode||"");if(!["stop","resume"].includes(mode))return res.status(400).json({error:"Invalid action."});try{await setPublishingState(mode==="stop",req.session.username);res.json({ok:true,message:mode==="stop"?"Emergency stop written to GitHub Actions repository variables. Future workflow checks should block uploads; an upload already in progress cannot be cancelled.":"Publishing variables enabled for future runs. Verify the channel, credentials and release timing before unattended publishing."});}catch(e){res.status(502).json({error:e.message+" The GitHub token needs repository Actions variables read/write permission."});}});
 
 app.get("/auth/youtube", requireAuth, (req, res) => {
   try {
