@@ -32,7 +32,7 @@ class ShortsDesignTests(unittest.TestCase):
 
     def test_english_script_has_source_link_and_pawan_totals(self):
         text = build_shorts.script_text("en", self.date, self.values, self.comparisons)
-        self.assertIn("AKGSMA", text)
+        self.assertIn("using published board rates", text)
         self.assertIn("swarnam4u.onrender.com", text)
         self.assertIn("₹13,135", text)
         self.assertIn("₹1,05,080", text)
@@ -139,7 +139,7 @@ class ShortsDesignTests(unittest.TestCase):
         english = rate_change_utils.video_title("en", self.date, "morning", change)
         malayalam = rate_change_utils.video_title("ml", self.date, "morning", change)
         self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:45 IST | UP ₹50/g vs Yesterday #IndiaGoldRate #Shorts")
-        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | രാവിലെ 10:45 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts")
+        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 10:45 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts")
         self.assertRegex(malayalam, "[\\u0D00-\\u0D7F]")
         for title in (english, malayalam):
             self.assertIn("#IndiaGoldRate" if title == english else "#KeralaGoldRate", title)
