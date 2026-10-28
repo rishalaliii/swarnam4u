@@ -67,6 +67,30 @@ jobs:
         run: python scripts/fetch_rates.py
       - name: Validate live board date and saved rates
         run: python scripts/shorts_preflight.py
+      - name: Validate scheduled publishing configuration
+        if: github.event_name == 'schedule' && vars.YOUTUBE_AUTO_PUBLISH == 'true' && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true'
+        env:
+          YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: |
+          test -n "$YOUTUBE_CLIENT_SECRET_JSON" || { echo "::error::Missing repository secret YOUTUBE_CLIENT_SECRET_JSON"; exit 1; }
+          test -n "$YOUTUBE_REFRESH_TOKEN" || { echo "::error::Missing repository secret YOUTUBE_REFRESH_TOKEN"; exit 1; }
+          python - <<'PY'
+          import json, os, sys
+          try:
+              raw = json.loads(os.environ["YOUTUBE_CLIENT_SECRET_JSON"])
+          except Exception:
+              print("::error::YOUTUBE_CLIENT_SECRET_JSON is not valid JSON")
+              sys.exit(1)
+          cfg = raw.get("installed") or raw.get("web")
+          if not isinstance(cfg, dict) or not cfg.get("client_id") or not cfg.get("client_secret"):
+              print("::error::OAuth JSON must contain installed/web client_id and client_secret fields")
+              sys.exit(1)
+          print("Scheduled publishing configuration is present; OAuth/channel authorization will be verified by the uploader.")
+          PY
+      - name: Explain why scheduled publishing is disabled
+        if: github.event_name == 'schedule' && vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && vars.YOUTUBE_AUTO_PUBLISH != 'true'
+        run: echo "::warning::Scheduled video publishing is disabled because repository variable YOUTUBE_AUTO_PUBLISH is not exactly 'true'. Videos may be built, but no YouTube upload will occur."
       - name: Resolve the scheduled slot
         id: slot
         env:
