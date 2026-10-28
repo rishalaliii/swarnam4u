@@ -27,7 +27,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
 IST = ZoneInfo("Asia/Kolkata")
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"]
-SLOT_TIMES = {"morning": (10, 30), "midday": (13, 0), "evening": (17, 0)}
+SLOT_TIMES = {"morning": (10, 45), "midday": (13, 15), "evening": (17, 15)}
 WEBSITE = "swarnam4u.onrender.com"
 EXPECTED_CHANNEL_HANDLE = os.environ.get("YOUTUBE_EXPECTED_CHANNEL_HANDLE", "").strip() or "@SWARANAM4U"
 

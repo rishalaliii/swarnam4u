@@ -7,6 +7,7 @@ snapshot values and each record's own date agree with the live board.
 """
 from __future__ import annotations
 import datetime as dt
+import html
 import json
 import pathlib
 import re
@@ -22,6 +23,7 @@ OUT = ROOT / "output" / "shorts-preflight.json"
 IST = ZoneInfo("Asia/Kolkata")
 URL = "https://akgsma.com/"
 UA = "Swarnam4U-rate-bot (+mailto:swarnam4u@gmail.com)"
+BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
 
 def parse_board_text(text: str) -> tuple[str, dict[str, float | None]]:
     """Parse normalized visible text from AKGSMA's current board page."""
@@ -81,6 +83,30 @@ def ensure_primary_source_allowed() -> None:
     if not robots_allows(robots_text):
         raise ValueError("AKGSMA robots.txt disallows this user-agent; preflight will not fetch the board.")
 
+def fetch_page_text(url: str, allow_mirror: bool, must: str) -> str:
+    """Fetch a source with direct/browser/mirror retries like fetch_rates.py."""
+    attempts = [(url, UA), (url, BROWSER_UA)]
+    if allow_mirror:
+        attempts.append(("https://r.jina.ai/" + url, BROWSER_UA))
+    errors: list[str] = []
+    for target, agent in attempts:
+        try:
+            req = urllib.request.Request(target, headers={
+                "User-Agent": agent,
+                "Accept-Language": "en-IN,en;q=0.9",
+            })
+            with urllib.request.urlopen(req, timeout=30) as response:
+                raw = response.read().decode("utf-8", "replace")
+            text = html.unescape(re.sub(r"<[^>]+>", " ", raw))
+            text = re.sub(r"\s+", " ", text)
+            if len(text) > 100 and re.search(must, text, re.I | re.S):
+                return text
+            errors.append(f"{target}: expected live-rate text not found")
+        except Exception as exc:
+            errors.append(f"{target}: {exc}")
+    raise ValueError("all fetch routes failed: " + " | ".join(errors))
+
+
 def fetch_board() -> tuple[str, dict[str, float | None]]:
     """Try the permitted primary board first, then the same-board LiveGold mirror."""
     errors: list[str] = []
@@ -93,13 +119,8 @@ def fetch_board() -> tuple[str, dict[str, float | None]]:
         try:
             if is_primary:
                 ensure_primary_source_allowed()
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=25) as response:
-                html = response.read().decode("utf-8", "replace")
-            text = re.sub(r"<[^>]+>", " ", html)
-            text = text.replace("&nbsp;", " ").replace("&#8377;", "₹").replace("&#39;", "'").replace("&amp;", "&")
-            result = parser(text)
-            board_date, rates = result
+            text = fetch_page_text(url, allow_mirror=not is_primary, must=r"Today.?s Rate" if is_primary else r"(?=.*AKGSMA)(?=.*22 Karat Gold)(?=.*18 Karat)(?=.*Ag 999)")
+            board_date, rates = parser(text)
             required = ("gold_22k_916", "gold_18k_750", "silver_999")
             if any(rates.get(key) is None or rates[key] <= 0 for key in required):
                 raise ValueError("one or more required rates are missing")
