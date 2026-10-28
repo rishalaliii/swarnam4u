@@ -37,3 +37,13 @@ Deploy this folder as a **separate Render web service** using `admin-app/render.
 - A kill switch prevents future automation runs only if the existing YouTube workflow checks `YOUTUBE_UPLOAD_KILL_SWITCH` before upload. Inspect that workflow before enabling automation.
 - Unreviewed OAuth apps can be restricted to private uploads by YouTube/Google policy. Test with private visibility first.
 - This admin app does not merge or deploy changes to the public site.
+
+
+## Admin automation controls (feature branch)
+
+This admin-only update does not edit the public website or any workflow YAML files.
+
+- Add `.github/workflows/build-shorts.yml` to `GITHUB_ALLOWED_WORKFLOWS` in Render to enable manual Shorts dispatch with a selected slot and `publish_mode`. `build_only` is the safe default; `public_now` requires confirmation. A dispatch acknowledgement is not proof of a successful upload.
+- The Shorts workflow reads `YOUTUBE_UPLOAD_KILL_SWITCH` and `YOUTUBE_AUTO_PUBLISH` from GitHub Actions repository **variables**. The admin now reads/writes variables instead of same-named secrets. The GitHub token needs Actions variables read/write permissions.
+- Set `CRONJOB_API_KEY` and numeric `CRONJOB_JOB_ID` in Render environment variables for cron-job.org status/history and enable/pause controls. The API key is never sent to the browser or stored in the repository.
+- Pausing the external timer does not disable the independent GitHub Actions schedules for Shorts/rate updates. The panel controls the configured job and does not create or rewrite its schedule.
