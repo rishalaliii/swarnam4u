@@ -4,11 +4,11 @@ on:
   # Fetch rates and build videos only for the scheduled publication slots.
   # Manual workflow_dispatch remains available for an intentional test/build.
   schedule:
-    # AKGSMA publishes the daily board around 10:00 IST, so morning build starts afterwards.
-    # 10:10, 12:30 and 16:30 IST. Earlier midday/evening starts leave more room for delayed runners.
-    - cron: "42 4 * * *"   # 10:12 IST -> morning slot
-    - cron: "32 7 * * *"   # 12:32 IST -> midday slot
-    - cron: "32 11 * * *"  # 16:32 IST -> evening slot
+    # AKGSMA usually publishes around 10:00 IST. Keep a build/upload buffer before each release.
+    # Scheduled releases are 10:45, 13:15 and 17:15 IST to reduce late-upload failures.
+    - cron: "42 4 * * *"   # 10:12 IST -> morning slot, 33-minute buffer
+    - cron: "32 7 * * *"   # 12:32 IST -> midday slot, 43-minute buffer
+    - cron: "32 11 * * *"  # 16:32 IST -> evening slot, 43-minute buffer
   workflow_dispatch:
     inputs:
       slot:
@@ -76,9 +76,6 @@ jobs:
         run: |
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             SLOT="$INPUT_SLOT"
-          elif [[ "$EVENT_NAME" == "push" ]]; then
-            # Artifact-only verification build after production code changes.
-            SLOT="morning"
           else
             case "$SCHEDULE" in
               "42 4 * * *") SLOT="morning" ;;
