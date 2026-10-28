@@ -43,10 +43,10 @@ def parse_board_text(text: str) -> tuple[str, dict[str, float | None]]:
 
 def parse_livegold_text(text: str) -> tuple[str, dict[str, float | None]]:
     """Parse the dated LiveGold Kerala mirror of the AKGSMA board."""
-    text = re.sub(r"\\s+", " ", text)
+    text = re.sub(r"\s+", " ", text)
     if not re.search(r"AKGSMA", text, re.I):
         raise ValueError("LiveGold page does not identify the AKGSMA board.")
-    date_match = re.search(r"\\b\\w+day,\\s*(\\d{1,2}) ([A-Z][a-z]+) (\\d{4})", text)
+    date_match = re.search(r"\b\w+day,\s*(\d{1,2}) ([A-Z][a-z]+) (\d{4})", text)
     months = {m: i for i, m in enumerate("January February March April May June July August September October November December".split(), 1)}
     if not date_match or date_match[2] not in months:
         raise ValueError("Could not parse LiveGold board date.")
@@ -55,9 +55,9 @@ def parse_livegold_text(text: str) -> tuple[str, dict[str, float | None]]:
         m = re.search(pattern, text, re.I)
         return float(m.group(1).replace(",", "")) if m else None
     return board_date, {
-        "gold_22k_916": rate(r"22 Karat Gold.{0,60}?₹\\s*([\\d,]+)"),
-        "gold_18k_750": rate(r"18 Karat\\s*750.{0,40}?₹\\s*([\\d,]+)"),
-        "silver_999": rate(r"Ag 999.{0,60}?₹\\s*([\\d,]+(?:\\.\\d+)?)\\s*/\\s*g"),
+        "gold_22k_916": rate(r"22 Karat Gold.{0,60}?₹\s*([\d,]+)"),
+        "gold_18k_750": rate(r"18 Karat\s*750.{0,40}?₹\s*([\d,]+)"),
+        "silver_999": rate(r"Ag 999.{0,60}?₹\s*([\d,]+(?:\.\d+)?)\s*/\s*g"),
         "silver_925_published": None,
     }
 
