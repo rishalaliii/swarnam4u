@@ -1,7 +1,9 @@
 name: Update rates
 on:
-  # Rate fetching is performed by build-shorts immediately before each upload.
-  # Keep this workflow manual-only for diagnostics; no background polling or push-triggered fetches.
+  # Keep the published rate snapshot fresh throughout the day; the Shorts workflow
+  # also independently fetches and validates live rates immediately before each slot.
+  schedule:
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
