@@ -16,11 +16,13 @@ class ShortsDesignTests(unittest.TestCase):
             "22K · 916": 13135,
             "18K · 750": 10750,
             "Silver · 999": 220,
+            "Silver · 925": 203.5,
         }
         self.comparisons = {
             "22K · 916": rate_change_utils.compare_rate(13135, 13085),
             "18K · 750": rate_change_utils.compare_rate(10750, 10705),
             "Silver · 999": rate_change_utils.compare_rate(220, 220),
+            "Silver · 925": rate_change_utils.compare_rate(203.5, 203.5),
         }
 
     def test_price_formatting(self):
@@ -30,7 +32,7 @@ class ShortsDesignTests(unittest.TestCase):
 
     def test_english_script_has_source_link_and_pawan_totals(self):
         text = build_shorts.script_text("en", self.date, self.values, self.comparisons)
-        self.assertIn("AKGSMA", text)
+        self.assertIn("using published board rates", text)
         self.assertIn("swarnam4u.onrender.com", text)
         self.assertIn("₹13,135", text)
         self.assertIn("₹1,05,080", text)
@@ -51,12 +53,19 @@ class ShortsDesignTests(unittest.TestCase):
         self.assertIn("ഇന്നലെയേക്കാൾ ഗ്രാമിന് ₹50 വർധിച്ചു.", text)
 
     def test_every_youtube_description_has_latest_rates_call_to_action(self):
-        description = upload_shorts.video_description(self.date)
-        self.assertIn("Check out the latest rates via https://swarnam4u.onrender.com", description)
-        self.assertIn("Source: AKGSMA Kerala", description)
-        self.assertIn("27 October 2026", description)
-        self.assertIn("#Shorts", description)
-        self.assertNotIn("Website: https://swarnam4u.onrender.com", description)
+        english = upload_shorts.video_description(self.date, "en")
+        malayalam = upload_shorts.video_description(self.date, "ml")
+        self.assertIn("Latest rates: https://swarnam4u.onrender.com", english)
+        self.assertIn("India gold and silver rate update", english)
+        self.assertIn("27 October 2026", english)
+        self.assertIn("#IndiaGoldRate", english)
+        self.assertIn("#Shorts", english)
+        self.assertIn("Kerala gold and silver rates", malayalam)
+        self.assertIn("27 October 2026", malayalam)
+        self.assertIn("#KeralaGoldRate", malayalam)
+        self.assertIn("#Shorts", malayalam)
+        self.assertNotIn("Website:", english)
+        self.assertNotIn("Website:", malayalam)
 
     def test_youtube_oauth_scopes_cover_upload_and_channel_checks(self):
         self.assertIn("https://www.googleapis.com/auth/youtube.upload", upload_shorts.SCOPES)
@@ -129,16 +138,16 @@ class ShortsDesignTests(unittest.TestCase):
         change = rate_change_utils.compare_rate(13135, 13085)
         english = rate_change_utils.video_title("en", self.date, "morning", change)
         malayalam = rate_change_utils.video_title("ml", self.date, "morning", change)
-        self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:30 IST | UP ₹50/g vs Yesterday #KeralaGoldRate #Shorts")
-        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 10:30 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts")
+        self.assertEqual(english, "Today's Gold Rate | 27 Oct 2026 | 10:45 IST | UP ₹50/g vs Yesterday #IndiaGoldRate #Shorts")
+        self.assertEqual(malayalam, "ഇന്നത്തെ സ്വർണ്ണവില | 27 ഒക്ടോബർ 2026 | 10:45 | ഇന്നലെയേക്കാൾ ₹50/ഗ്രാം വർധന #KeralaGoldRate #Shorts")
         self.assertRegex(malayalam, "[\\u0D00-\\u0D7F]")
         for title in (english, malayalam):
-            self.assertIn("#KeralaGoldRate", title)
+            self.assertIn("#IndiaGoldRate" if title == english else "#KeralaGoldRate", title)
             self.assertIn("#Shorts", title)
             self.assertLessEqual(len(title), 100)
-        self.assertIn("13:00 IST", rate_change_utils.video_title("en", self.date, "midday", change))
+        self.assertIn("13:15 IST", rate_change_utils.video_title("en", self.date, "midday", change))
         evening_malayalam_title = rate_change_utils.video_title("ml", self.date, "evening", change)
-        self.assertIn("17:00", evening_malayalam_title)
+        self.assertIn("17:15", evening_malayalam_title)
         self.assertRegex(evening_malayalam_title, "[\\u0D00-\\u0D7F]")
 
     def test_all_movement_title_variants_keep_hashtags_and_fit_limit(self):
@@ -153,7 +162,7 @@ class ShortsDesignTests(unittest.TestCase):
             for lang in ("en", "ml"):
                 title = rate_change_utils.video_title(lang, self.date, "morning", comparison)
                 self.assertLessEqual(len(title), 100, title)
-                self.assertTrue(title.endswith("#KeralaGoldRate #Shorts"), title)
+                self.assertTrue(title.endswith("#IndiaGoldRate #Shorts" if lang == "en" else "#KeralaGoldRate #Shorts"), title)
 
     def test_no_change_and_unavailable_titles_do_not_invent_deltas(self):
         same = rate_change_utils.compare_rate(220, 220)
