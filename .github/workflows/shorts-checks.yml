@@ -1,6 +1,28 @@
 name: Shorts code checks
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/shorts_preflight.py"
+      - "scripts/fetch_rates.py"
+      - "scripts/rate_change_utils.py"
+      - "scripts/build_shorts.py"
+      - "scripts/upload_shorts.py"
+      - "scripts/check_youtube_connection.py"
+      - "scripts/authorize_youtube.py"
+      - "requirements-shorts.txt"
+      - "requirements-youtube-auth.txt"
+      - "tests/test_shorts_pipeline.py"
+      - "tests/poster.test.js"
+      - "assets/poster-core.js"
+      - "assets/posters/**"
+      - "data/poster-templates.json"
+      - "data/rates.json"
+      - ".github/workflows/build-shorts.yml"
+      - ".github/workflows/shorts-checks.yml"
+      - ".github/workflows/verify-youtube-connection.yml"
   pull_request:
     paths:
       - "scripts/shorts_preflight.py"
