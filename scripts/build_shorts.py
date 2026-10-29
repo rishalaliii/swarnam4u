@@ -150,22 +150,20 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
     if lang == "en":
         # Short rate-first narration leaves a buffer for TTS pronunciation variation.
         return (
-            f"Kerala rates for {date_en}. "
-            f"22-carat gold, 916: {v22} per gram; one pawan: {v22_pawan}. "
+            f"Kerala gold and silver rates for {date_en}, using published board rates. "
+            f"22-carat 916 gold: {v22} per gram. One pawan, equal to eight grams, is {v22_pawan}. "
             f"{gold_change} "
-            f"18-carat gold: {v18} per gram. "
-            f"999 silver: {silver} per gram. "
-            f"925 silver: {silver925} per gram. "
+            f"18-carat gold: {v18} per gram; one pawan is {v18_pawan}. "
+            f"999 silver: {silver} per gram. 925 silver: {silver925} per gram. "
             f"Visit {WEBSITE}."
         )
     return (
-        f"{malayalam_date_text(date)}. "
+        f"{malayalam_date_text(date)} തീയതിയിലെ കേരളത്തിലെ നിരക്കുകൾ. "
         f"22 കാരറ്റ് 916 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
-        f"ഒരു പവൻ: {v22_pawan}. "
+        f"എട്ട് ഗ്രാം, ഒരു പവൻ {v22_pawan}. "
         f"{gold_change} "
-        f"18 കാരറ്റ് സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}. "
-        f"999 വെള്ളി ഒരു ഗ്രാമിന് {silver}. "
-        f"925 വെള്ളി ഒരു ഗ്രാമിന് {silver925}. "
+        f"18 കാരറ്റ് സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}; ഒരു പവൻ {v18_pawan}. "
+        f"999 വെള്ളി ഒരു ഗ്രാമിന് {silver}. 925 വെള്ളി ഒരു ഗ്രാമിന് {silver925}. "
         f"{WEBSITE}."
     )
 
