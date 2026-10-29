@@ -148,27 +148,25 @@ def script_text(lang: str, date: dt.date, values: dict[str, float], comparisons:
     v18_pawan = inr(values["18K · 750"] * 8)
     gold_change = spoken_change_text(comparisons["22K · 916"], lang)
     if lang == "en":
+        # Short rate-first narration leaves a buffer for TTS pronunciation variation.
         return (
-            f"India gold and silver rate update for {date_en}, using published board rates. "
-            f"Twenty-two carat 916 gold: {v22} per gram. "
-            f"One pawan, equal to eight grams, is {v22_pawan}. "
+            f"Kerala rates for {date_en}. "
+            f"22-carat gold, 916: {v22} per gram; one pawan: {v22_pawan}. "
             f"{gold_change} "
-            f"Eighteen carat 750 gold: {v18} per gram; one pawan is {v18_pawan}. "
+            f"18-carat gold: {v18} per gram. "
             f"999 silver: {silver} per gram. "
-            f"925 sterling silver: {silver925} per gram. "
-            f"Pawan amounts are calculated from per-gram rates. "
+            f"925 silver: {silver925} per gram. "
             f"Visit {WEBSITE}."
         )
     return (
-        f"{malayalam_date_text(date)} തീയതിയിലെ കേരളത്തിലെ സ്വർണ്ണ, വെള്ളി നിരക്കുകൾ. "
+        f"{malayalam_date_text(date)}. "
         f"22 കാരറ്റ് 916 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v22}. "
-        f"എട്ട് ഗ്രാം, ഒരു പവൻ {v22_pawan}. "
+        f"ഒരു പവൻ: {v22_pawan}. "
         f"{gold_change} "
-        f"18 കാരറ്റ് 750 സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}; ഒരു പവൻ {v18_pawan}. "
+        f"18 കാരറ്റ് സ്വർണ്ണം ഒരു ഗ്രാമിന് {v18}. "
         f"999 വെള്ളി ഒരു ഗ്രാമിന് {silver}. "
         f"925 വെള്ളി ഒരു ഗ്രാമിന് {silver925}. "
-        f"പവൻ തുക ഗ്രാമിന്റെ നിരക്കിൽ നിന്ന് കണക്കാക്കിയതാണ്. "
-        f"{WEBSITE} സന്ദർശിക്കുക."
+        f"{WEBSITE}."
     )
 
 def wrap_to_width(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
@@ -384,8 +382,9 @@ async def main_async(slot: str) -> int:
         draw_card(lang, date, values, comparisons, slot, png, display_time=display_time)
         await make_voice(narration, VOICES[lang], mp3)
         duration = probe_duration(mp3)
-        if duration > 55:
-            raise RuntimeError(f"{lang} narration is {duration:.1f}s; limit is 55 seconds. Shorten the script before rendering.")
+        # Keep a 3-second buffer below the hard Shorts narration ceiling.
+        if duration > 52:
+            raise RuntimeError(f"{lang} narration is {duration:.1f}s; safe limit is 52 seconds (55-second ceiling). Shorten the script before rendering.")
         render_video(png, mp3, mp4, duration)
         manifest["videos"].append({
             "language": lang,
