@@ -1,65 +1,65 @@
 {
-  "updated": "2026-10-31T06:24:38+05:30",
+  "updated": "2026-10-31T11:52:53+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
   "unit": "gram",
   "gold": {
     "22K · 916": {
-      "today": 13040,
-      "yesterday": 13195,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 12730,
+      "yesterday": 13040,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala"
     },
     "18K · 750": {
-      "today": 10670,
-      "yesterday": 10800,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 10420,
+      "yesterday": 10670,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala"
     },
     "24K · 999": {
-      "today": 14225,
-      "yesterday": 14395,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 13887,
+      "yesterday": 14225,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala (calculated from 22K)"
     },
     "14K · 585": {
-      "today": 8328,
-      "yesterday": 8427,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 8130,
+      "yesterday": 8328,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala (calculated from 22K)"
     }
   },
   "silver": {
     "Silver · 999": {
-      "today": 210.0,
-      "yesterday": 215.0,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 200.0,
+      "yesterday": 210.0,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala"
     },
     "Silver · 925": {
-      "today": 194.25,
-      "yesterday": 198.88,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 185.0,
+      "yesterday": 194.25,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala (calculated from 999)"
     },
     "Silver · 800": {
-      "today": 168.0,
-      "yesterday": 172.0,
-      "yesterday_date": "2026-10-29",
-      "date": "2026-10-30",
+      "today": 160.0,
+      "yesterday": 168.0,
+      "yesterday_date": "2026-10-30",
+      "date": "2026-10-31",
       "source": "AKGSMA Kerala (calculated from 999)"
     }
   },
   "platinum": {
     "Platinum · 950": {
-      "today": 4434.0,
+      "today": 4361.0,
       "yesterday": 4434.0,
       "yesterday_date": "2026-10-30",
       "date": "2026-10-31",
@@ -151,7 +151,7 @@
       },
       {
         "date": "2026-10-31",
-        "rate": 13039.0
+        "rate": 12730.0
       }
     ],
     "silver": [
@@ -194,6 +194,10 @@
       {
         "date": "2026-10-30",
         "rate": 194.25
+      },
+      {
+        "date": "2026-10-31",
+        "rate": 185.0
       }
     ],
     "platinum": [
@@ -239,7 +243,7 @@
       },
       {
         "date": "2026-10-31",
-        "rate": 4434.0
+        "rate": 4361.0
       }
     ]
   },
@@ -328,7 +332,7 @@
         },
         {
           "date": "2026-10-31",
-          "rate": 13039.0
+          "rate": 12730.0
         }
       ]
     },
@@ -416,7 +420,7 @@
         },
         {
           "date": "2026-10-31",
-          "rate": 14225.0
+          "rate": 13888.0
         }
       ]
     },
@@ -465,6 +469,10 @@
         {
           "date": "2026-10-30",
           "rate": 210.0
+        },
+        {
+          "date": "2026-10-31",
+          "rate": 200.0
         }
       ]
     },
@@ -513,14 +521,18 @@
         {
           "date": "2026-10-30",
           "rate": 194.25
+        },
+        {
+          "date": "2026-10-31",
+          "rate": 185.0
         }
       ]
     }
   },
   "spot": {
-    "gold_24k_per_gram": 11876.18,
+    "gold_24k_per_gram": 11848.94,
     "usd_per_oz": 3876.399902,
-    "usd_inr": 95.292116,
-    "updated_at": "2026-10-31T06:24:38+05:30"
+    "usd_inr": 95.073571,
+    "updated_at": "2026-10-31T11:52:53+05:30"
   }
 }
