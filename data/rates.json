@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-03T22:50:22+05:30",
+  "updated": "2026-11-04T03:53:06+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
@@ -60,9 +60,9 @@
   "platinum": {
     "Platinum · 950": {
       "today": 4377.0,
-      "yesterday": 4370.0,
-      "yesterday_date": "2026-11-02",
-      "date": "2026-11-03",
+      "yesterday": 4377.0,
+      "yesterday_date": "2026-11-03",
+      "date": "2026-11-04",
       "source": "Goodreturns Kerala"
     }
   },
@@ -279,6 +279,10 @@
       },
       {
         "date": "2026-11-03",
+        "rate": 4377.0
+      },
+      {
+        "date": "2026-11-04",
         "rate": 4377.0
       }
     ]
@@ -614,9 +618,9 @@
     }
   },
   "spot": {
-    "gold_24k_per_gram": 11995.67,
-    "usd_per_oz": 3930.399902,
+    "gold_24k_per_gram": 11998.72,
+    "usd_per_oz": 3931.399902,
     "usd_inr": 94.928524,
-    "updated_at": "2026-11-03T22:50:22+05:30"
+    "updated_at": "2026-11-04T03:53:06+05:30"
   }
 }
