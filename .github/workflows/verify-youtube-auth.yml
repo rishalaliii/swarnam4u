@@ -1,0 +1,75 @@
+name: Verify Swarnam4U YouTube OAuth
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Google API libraries
+        run: python -m pip install --disable-pip-version-check google-auth google-api-python-client
+
+      - name: Refresh OAuth token and verify channel identity (no upload)
+        env:
+          YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_EXPECTED_CHANNEL_HANDLE: ${{ vars.YOUTUBE_EXPECTED_CHANNEL_HANDLE || '@SWARANAM4U' }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from google.auth.transport.requests import Request
+          from google.oauth2.credentials import Credentials
+          from googleapiclient.discovery import build
+
+          try:
+              raw = json.loads(os.environ["YOUTUBE_CLIENT_SECRET_JSON"])
+              cfg = raw.get("installed") or raw.get("web")
+              if not isinstance(cfg, dict):
+                  raise RuntimeError("OAuth JSON must contain an installed or web client.")
+              token = os.environ["YOUTUBE_REFRESH_TOKEN"].strip()
+              if not token:
+                  raise RuntimeError("YOUTUBE_REFRESH_TOKEN is empty.")
+              expected = os.environ.get("YOUTUBE_EXPECTED_CHANNEL_HANDLE", "@SWARANAM4U").strip()
+              expected = expected.rstrip("/").split("/")[-1].lstrip("@").casefold()
+              creds = Credentials(
+                  token=None,
+                  refresh_token=token,
+                  token_uri=cfg.get("token_uri", "https://oauth2.googleapis.com/token"),
+                  client_id=cfg["client_id"],
+                  client_secret=cfg["client_secret"],
+                  scopes=["https://www.googleapis.com/auth/youtube.readonly"],
+              )
+              creds.refresh(Request())
+              youtube = build("youtube", "v3", credentials=creds, cache_discovery=False)
+              mine = youtube.channels().list(part="id,snippet", mine=True, maxResults=1).execute()
+              items = mine.get("items", [])
+              if not items:
+                  raise RuntimeError("OAuth worked, but the authorized Google account has no accessible YouTube channel.")
+              channel = items[0]
+              snippet = channel.get("snippet", {})
+              actual = (snippet.get("customUrl") or snippet.get("handle") or "").strip()
+              actual = actual.rstrip("/").split("/")[-1].lstrip("@").casefold()
+              if not actual:
+                  raise RuntimeError("Could not verify the channel handle returned by YouTube.")
+              if actual != expected:
+                  raise RuntimeError(f"Authenticated channel handle does not match the configured expected handle. Expected @{expected}; received @{actual}. No upload was attempted.")
+              print("OAUTH_TOKEN_REFRESH: PASS")
+              print("YOUTUBE_CHANNEL_ACCESS: PASS")
+              print(f"CHANNEL_HANDLE_MATCH: PASS (@{actual})")
+              print("UPLOAD_ATTEMPTED: NO")
+          except Exception as exc:
+              print(f"YOUTUBE_AUTH_VERIFICATION_FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
+              sys.exit(1)
+          PY
