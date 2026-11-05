@@ -1,59 +1,59 @@
 {
-  "updated": "2026-11-05T08:23:41+05:30",
+  "updated": "2026-11-05T15:26:16+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
   "unit": "gram",
   "gold": {
     "22K · 916": {
-      "today": 13090,
-      "yesterday": 12800,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "today": 13385,
+      "yesterday": 13090,
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala"
     },
     "18K · 750": {
-      "today": 10720,
-      "yesterday": 10475,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "today": 10955,
+      "yesterday": 10720,
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala"
     },
     "24K · 999": {
-      "today": 14280,
-      "yesterday": 13964,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "today": 14602,
+      "yesterday": 14280,
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala (calculated from 22K)"
     },
     "14K · 585": {
-      "today": 8360,
-      "yesterday": 8175,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "today": 8548,
+      "yesterday": 8360,
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala (calculated from 22K)"
     }
   },
   "silver": {
     "Silver · 999": {
-      "today": 200.0,
+      "today": 210.0,
       "yesterday": 200.0,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala"
     },
     "Silver · 925": {
-      "today": 185.0,
+      "today": 194.25,
       "yesterday": 185.0,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala (calculated from 999)"
     },
     "Silver · 800": {
-      "today": 160.0,
+      "today": 168.0,
       "yesterday": 160.0,
-      "yesterday_date": "2026-11-03",
-      "date": "2026-11-04",
+      "yesterday_date": "2026-11-04",
+      "date": "2026-11-05",
       "source": "AKGSMA Kerala (calculated from 999)"
     }
   },
@@ -171,7 +171,7 @@
       },
       {
         "date": "2026-11-05",
-        "rate": 13091.0
+        "rate": 13385.0
       }
     ],
     "silver": [
@@ -234,6 +234,10 @@
       {
         "date": "2026-11-04",
         "rate": 185.0
+      },
+      {
+        "date": "2026-11-05",
+        "rate": 194.25
       }
     ],
     "platinum": [
@@ -408,7 +412,7 @@
         },
         {
           "date": "2026-11-05",
-          "rate": 13091.0
+          "rate": 13385.0
         }
       ]
     },
@@ -516,7 +520,7 @@
         },
         {
           "date": "2026-11-05",
-          "rate": 14281.0
+          "rate": 14602.0
         }
       ]
     },
@@ -585,6 +589,10 @@
         {
           "date": "2026-11-04",
           "rate": 200.0
+        },
+        {
+          "date": "2026-11-05",
+          "rate": 210.0
         }
       ]
     },
@@ -653,14 +661,18 @@
         {
           "date": "2026-11-04",
           "rate": 185.0
+        },
+        {
+          "date": "2026-11-05",
+          "rate": 194.25
         }
       ]
     }
   },
   "spot": {
-    "gold_24k_per_gram": 12583.68,
-    "usd_per_oz": 4136.5,
+    "gold_24k_per_gram": 12548.09,
+    "usd_per_oz": 4124.799805,
     "usd_inr": 94.620171,
-    "updated_at": "2026-11-05T08:23:41+05:30"
+    "updated_at": "2026-11-05T15:26:16+05:30"
   }
 }
