@@ -211,7 +211,7 @@ def main() -> int:
         print("Emergency stop is ON; refusing every YouTube upload.", file=sys.stderr)
         return 2
     publish_mode = os.environ.get("SHORTS_PUBLISH_MODE", "scheduled_private").strip().lower()
-    if publish_mode not in {"scheduled_private", "public_now"}:
+    if publish_mode not in {"scheduled_private", "public_now", "private_test"}:
         print("SHORTS_PUBLISH_MODE must be scheduled_private or public_now.", file=sys.stderr)
         return 2
     slot = os.environ.get("SHORTS_SLOT", "")
