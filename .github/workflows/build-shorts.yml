@@ -123,8 +123,9 @@ jobs:
           echo "Building slot: $SLOT"
       - name: Build English + Malayalam Shorts
         env:
-          # The manifest is upload-enabled only when this run explicitly requests publishing
-          # or is a scheduled run with auto-publishing enabled, and the kill switch is off.
+          # Cron-job.org uses scheduled_release for automatic slots. Manual public_now
+          # is explicit; schedule_private still respects YOUTUBE_AUTO_PUBLISH. The kill switch
+          # always disables publishing while allowing video generation to finish.
           YOUTUBE_AUTO_PUBLISH: ${{ vars.YOUTUBE_UPLOAD_KILL_SWITCH != 'true' && (inputs.publish_mode == 'scheduled_release' || inputs.publish_mode == 'public_now' || (inputs.publish_mode == 'schedule_private' && vars.YOUTUBE_AUTO_PUBLISH == 'true')) }}
           SHORTS_PUBLISH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_mode == 'public_now' && 'public_now' || 'scheduled_private' }}
           SHORTS_USE_CURRENT_TIME: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_mode != 'scheduled_release' && 'true' || 'false' }}
