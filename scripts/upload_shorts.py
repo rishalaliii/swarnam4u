@@ -199,7 +199,7 @@ def upload_one(youtube, path: pathlib.Path, lang: str, date: dt.date, slot: str,
     if not video_id:
         raise RuntimeError("YouTube upload response did not include a video ID.")
     result = {"language": lang, "title": title, "video_id": video_id,
-              "status": "published_public" if publish_mode == "public_now" else "scheduled_private"}
+              "status": "published_public" if publish_mode == "public_now" else ("uploaded_private_test" if publish_mode == "private_test" else "scheduled_private")}
     if publish_at is not None:
         result["publish_at_ist"] = publish_at.astimezone(IST).isoformat(timespec="seconds")
     return result
