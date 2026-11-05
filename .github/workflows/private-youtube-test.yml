@@ -1,0 +1,69 @@
+name: Swarnam4U Private YouTube Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "Build slot used for the private test pair"
+        required: true
+        type: choice
+        options:
+          - morning
+          - midday
+          - evening
+        default: morning
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swarnam4u-shorts-build-${{ inputs.slot }}
+  cancel-in-progress: false
+
+jobs:
+  private-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install FFmpeg and fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg fontconfig fonts-noto-core fonts-dejavu-core libraqm-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libjpeg-dev zlib1g-dev
+      - name: Install Python packages with Malayalam shaping
+        run: |
+          python -m pip install -r requirements-shorts.txt
+          python -m pip install --force-reinstall --no-binary=Pillow "Pillow>=10.4,<13"
+          python -c "from PIL import features; assert features.check_feature('raqm')"
+      - name: Fetch live rates and run preflight
+        run: |
+          python scripts/fetch_rates.py
+          python scripts/shorts_preflight.py
+      - name: Build English and Malayalam pair for private test
+        env:
+          YOUTUBE_AUTO_PUBLISH: "true"
+          SHORTS_PUBLISH_MODE: scheduled_private
+          SHORTS_USE_CURRENT_TIME: "true"
+        run: python scripts/build_shorts.py --slot "${{ inputs.slot }}"
+      - name: Upload both videos as PRIVATE only
+        env:
+          SHORTS_SLOT: ${{ inputs.slot }}
+          SHORTS_PUBLISH_MODE: private_test
+          YOUTUBE_UPLOAD_KILL_SWITCH: ${{ vars.YOUTUBE_UPLOAD_KILL_SWITCH || 'true' }}
+          YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_EXPECTED_CHANNEL_HANDLE: ${{ vars.YOUTUBE_EXPECTED_CHANNEL_HANDLE || '@SWARANAM4U' }}
+        run: |
+          test "$YOUTUBE_UPLOAD_KILL_SWITCH" != "true" || { echo "::error::Emergency stop is ON. Private test refused."; exit 1; }
+          python scripts/upload_shorts.py
+      - name: Save private test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swarnam4u-private-test-${{ github.run_id }}
+          path: output/
+          if-no-files-found: warn
+          retention-days: 7
