@@ -2,7 +2,7 @@
    Rates come from data/rates.json / site.js; templates from data/instagram-poster-templates.json. Output keeps the design's own pixel size. */
 (function(){
 "use strict";
-var C=PosterCore,S=Swarnam,$=S.$,PHONE="9895232441",cfg={},tpl=null,poster=null,busy=false,cache={};
+var C=PosterCore,S=Swarnam,$=S.$,PHONE="9895232441",cfg={},tpl=null,poster=null,busy=false,cache={},PREVIEW=new URLSearchParams(location.search).get("preview")==="1";
 var SANS='Jost,"Segoe UI",Arial,sans-serif';
 function lg(c,x0,y0,x1,y1,st){var g=c.createLinearGradient(x0,y0,x1,y1);st.forEach(function(s,i){g.addColorStop(i/(st.length-1),s)});return g}
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
@@ -61,7 +61,8 @@ function render(){
   var now=p.updated;tpl=cfg.tpl.templates[todayIndex(new Date())];
   return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;if(cv.width!==img.naturalWidth)cv.width=img.naturalWidth;if(cv.height!==img.naturalHeight)cv.height=img.naturalHeight;
     draw(cv.getContext("2d"),cv.width,cv.height,img,tpl,cfg.tpl.layout,p,now);
-    status(p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster updated automatically · rates from "+p.source+" · "+C.dateLabel(p.updated)+", "+C.timeLabel(p.updated),p.stale?"warn":"ok");
+    if(PREVIEW){var x=cv.getContext("2d");x.save();x.translate(cv.width/2,cv.height/2);x.rotate(-Math.PI/5);x.textAlign="center";x.textBaseline="middle";x.font="900 "+Math.round(cv.width*.105)+"px "+SANS;x.fillStyle="rgba(255,35,35,.78)";x.strokeStyle="rgba(255,255,255,.9)";x.lineWidth=Math.max(3,cv.width*.004);x.strokeText("PREVIEW ONLY",0,0);x.fillText("PREVIEW ONLY",0,0);x.restore();}
+    status(PREVIEW?"PREVIEW ONLY – saved rates from "+C.dateLabel(p.updated)+". NOT FOR POSTING.":p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster updated automatically · rates from "+p.source+" · "+C.dateLabel(p.updated)+", "+C.timeLabel(p.updated),p.stale?"warn":"ok");
     return true},
     function(e){status(e.message,"err");return false})}
 function blob(){return render().then(function(ok){if(!ok)throw new Error("poster not ready");return new Promise(function(res,rej){$("poster").toBlob(function(b){b?res(b):rej(new Error("export failed"))},"image/png")})})}
@@ -95,6 +96,6 @@ document.addEventListener("DOMContentLoaded",function(){
   $("bDown").onclick=guard(function(){return blob().then(function(b){download(b);status("Poster PNG downloaded.","ok")})});
   $("bShare").onclick=guard(share);$("bCopy").onclick=function(){if(poster&&poster.ok)copy()};
   $("bRef").onclick=function(){status("Refreshing rates…","");S.refresh(true).then(render)};
-  Promise.all([j("data/poster-config.json"),early]).then(function(a){cfg.poster=a[0]||{};cfg.tpl=a[1];S.start(render)});
+  Promise.all([j("data/poster-config.json"),early]).then(function(a){cfg.poster=a[0]||{};cfg.tpl=a[1];if(PREVIEW){j("data/rates.json").then(function(d){if(!d){status("Saved rates file could not be loaded.","err");return}S.data=d;S.error=false;S.renderStamp();render()})}else{S.start(render)}});
 });
 })();
