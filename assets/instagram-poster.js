@@ -59,8 +59,9 @@ function render(){
   if(!p.ok){cv.hidden=true;status(p.error,"err");return Promise.resolve(false)}
   if(!cfg.tpl){status("Poster designs could not be loaded. Check data/instagram-poster-templates.json.","err");return Promise.resolve(false)}
   var now=p.updated;tpl=cfg.tpl.templates[todayIndex(new Date())];
-  return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;if(cv.width!==img.naturalWidth)cv.width=img.naturalWidth;if(cv.height!==img.naturalHeight)cv.height=img.naturalHeight;
-    draw(cv.getContext("2d"),cv.width,cv.height,img,tpl,cfg.tpl.layout,p,now);
+  return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;var scale=3; if(cv.width!==img.naturalWidth*scale)cv.width=img.naturalWidth*scale;if(cv.height!==img.naturalHeight*scale)cv.height=img.naturalHeight*scale;
+    var ctx=cv.getContext("2d");ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+    draw(ctx,cv.width,cv.height,img,tpl,cfg.tpl.layout,p,now);
     if(PREVIEW){var x=cv.getContext("2d");x.save();x.translate(cv.width/2,cv.height/2);x.rotate(-Math.PI/5);x.textAlign="center";x.textBaseline="middle";x.font="900 "+Math.round(cv.width*.105)+"px "+SANS;x.fillStyle="rgba(255,35,35,.78)";x.strokeStyle="rgba(255,255,255,.9)";x.lineWidth=Math.max(3,cv.width*.004);x.strokeText("PREVIEW ONLY",0,0);x.fillText("PREVIEW ONLY",0,0);x.restore();}
     status(PREVIEW?"PREVIEW ONLY – saved rates from "+C.dateLabel(p.updated)+". NOT FOR POSTING.":p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster updated automatically · rates from "+p.source+" · "+C.dateLabel(p.updated)+", "+C.timeLabel(p.updated),p.stale?"warn":"ok");
     return true},
