@@ -174,14 +174,14 @@ jobs:
           set -euo pipefail
           python scripts/fetch_rates.py
           python scripts/shorts_preflight.py
-      - name: Render the existing 10-design poster
+      - name: Render the separate Swarnam4U Instagram 10-design poster
         run: |
           set -euo pipefail
           python -m http.server 8765 --bind 127.0.0.1 >/tmp/swarnam-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           for attempt in {1..20}; do
-            if curl --silent --fail http://127.0.0.1:8765/poster.html >/dev/null; then break; fi
+            if curl --silent --fail http://127.0.0.1:8765/instagram-poster.html >/dev/null; then break; fi
             sleep 1
           done
           python scripts/render_instagram_poster.py
