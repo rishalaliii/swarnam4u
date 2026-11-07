@@ -16,7 +16,7 @@ async def main() -> None:
         page = await browser.new_page(viewport={"width": 1200, "height": 1800}, device_scale_factor=1)
         errors: list[str] = []
         page.on("pageerror", lambda exc: errors.append(str(exc)))
-        await page.goto("http://127.0.0.1:8765/poster.html", wait_until="networkidle", timeout=90000)
+        await page.goto("http://127.0.0.1:8765/instagram-poster.html", wait_until="networkidle", timeout=90000)
         await page.wait_for_function(
             """() => {
               const c = document.querySelector('#poster');
