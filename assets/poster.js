@@ -29,7 +29,7 @@ function row(c,r,x,y,w,h,u,t){
   c.restore()}
 function draw(c,W,H,img,t,L,p,now){
   var u=W/1080;c.clearRect(0,0,W,H);c.drawImage(img,0,0,W,H);c.textBaseline="alphabetic";
-  /* date pill (today, IST) */
+  /* Date pill follows the actual rates snapshot timestamp (IST), not the viewer's device clock. */
   var ph=H*L.pillH,py=H*L.pillTop,pw=W*.6,px=(W-pw)/2;rr(c,px,py,pw,ph,ph/2);c.fillStyle=lg(c,0,py,0,py+ph,t.pill);c.fill();
   c.strokeStyle="rgba(255,241,192,.8)";c.lineWidth=2*u;c.stroke();c.fillStyle=t.pillText;c.textAlign="left";
   var ds=C.dateLabel(now),dy=C.dayLabel(now),mid=py+ph/2;
@@ -58,14 +58,14 @@ function render(){
   btns.forEach(function(b){b.disabled=!p.ok});
   if(!p.ok){cv.hidden=true;status(p.error,"err");return Promise.resolve(false)}
   if(!cfg.tpl){status("Poster designs could not be loaded. Check data/poster-templates.json.","err");return Promise.resolve(false)}
-  var now=new Date();tpl=cfg.tpl.templates[todayIndex(now)];
+  var now=p.updated;tpl=cfg.tpl.templates[todayIndex(new Date())];
   return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;if(cv.width!==img.naturalWidth)cv.width=img.naturalWidth;if(cv.height!==img.naturalHeight)cv.height=img.naturalHeight;
     draw(cv.getContext("2d"),cv.width,cv.height,img,tpl,cfg.tpl.layout,p,now);
     status(p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster updated automatically · rates from "+p.source+" · "+C.dateLabel(p.updated)+", "+C.timeLabel(p.updated),p.stale?"warn":"ok");
     return true},
     function(e){status(e.message,"err");return false})}
 function blob(){return render().then(function(ok){if(!ok)throw new Error("poster not ready");return new Promise(function(res,rej){$("poster").toBlob(function(b){b?res(b):rej(new Error("export failed"))},"image/png")})})}
-function fname(){return "asian-jewellery-rates-"+C.dateLabel(new Date()).replace(/ /g,"-").toLowerCase()+".png"}
+function fname(){return "swarnam4u-rates-"+C.dateLabel(poster&&poster.updated?poster.updated:new Date()).replace(/ /g,"-").toLowerCase()+".png"}
 function download(b){var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname();document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},4000)}
 function guard(fn){return function(){if(busy)return;busy=true;fn().catch(function(e){status("Could not create the poster: "+e.message,"err")}).then(function(){busy=false})}}
 function share(){
