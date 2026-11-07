@@ -62,7 +62,7 @@ function render(){
   return Promise.all([fonts(),loadImg(tpl.image)]).then(function(a){var img=a[1];cv.hidden=false;var scale=3; if(cv.width!==img.naturalWidth*scale)cv.width=img.naturalWidth*scale;if(cv.height!==img.naturalHeight*scale)cv.height=img.naturalHeight*scale;
     var ctx=cv.getContext("2d");ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
     draw(ctx,cv.width,cv.height,img,tpl,cfg.tpl.layout,p,now);
-    if(PREVIEW){var x=cv.getContext("2d");x.save();x.translate(cv.width/2,cv.height/2);x.rotate(-Math.PI/5);x.textAlign="center";x.textBaseline="middle";x.font="900 "+Math.round(cv.width*.105)+"px "+SANS;x.fillStyle="rgba(255,35,35,.78)";x.strokeStyle="rgba(255,255,255,.9)";x.lineWidth=Math.max(3,cv.width*.004);x.strokeText("PREVIEW ONLY",0,0);x.fillText("PREVIEW ONLY",0,0);x.restore();}
+    if(PREVIEW){var x=cv.getContext("2d"),fs=Math.round(cv.width*.035),pad=Math.round(cv.width*.018),label="PREVIEW ONLY · NOT FOR POSTING";x.save();x.font="800 "+fs+"px "+SANS;x.textAlign="center";x.textBaseline="middle";var tw=x.measureText(label).width,bw=tw+pad*2,bh=fs+pad*1.2,bx=(cv.width-bw)/2,by=cv.height-bh-pad;x.fillStyle="rgba(20,12,5,.88)";rr(x,bx,by,bw,bh,bh/2);x.fill();x.fillStyle="#fff";x.fillText(label,cv.width/2,by+bh/2);x.restore();}
     status(PREVIEW?"PREVIEW ONLY – saved rates from "+C.dateLabel(p.updated)+". NOT FOR POSTING.":p.stale?"Rates are older than 24 hours – shown with their real update time. Tap Refresh Rates to retry.":"Poster updated automatically · rates from "+p.source+" · "+C.dateLabel(p.updated)+", "+C.timeLabel(p.updated),p.stale?"warn":"ok");
     return true},
     function(e){status(e.message,"err");return false})}
