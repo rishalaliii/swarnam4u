@@ -2,6 +2,7 @@
 """Render Swarnam4U Instagram posters; --preview renders all ten with a visible watermark."""
 from __future__ import annotations
 import asyncio
+import base64
 import pathlib
 import sys
 from playwright.async_api import async_playwright
@@ -32,7 +33,8 @@ async def main() -> None:
                 if size["w"] < 900 or size["h"] < 1300:
                     raise RuntimeError(f"Unexpected poster dimensions for design {design}: {size}")
                 target = OUT / f"preview-design-{design:02d}.png"
-                await canvas.screenshot(path=str(target), type="png")
+                png = await canvas.evaluate("c => c.toDataURL('image/png').split(',')[1]")
+                target.write_bytes(base64.b64decode(png))
                 print(f"PREVIEW_FILE={target} SIZE={size['w']}x{size['h']} STATUS={status}")
         else:
             await page.goto("http://127.0.0.1:8765/instagram-poster.html", wait_until="networkidle", timeout=90000)
@@ -49,7 +51,8 @@ async def main() -> None:
                 raise RuntimeError(f"Unexpected poster dimensions: {size}")
             date = await page.evaluate("new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())")
             target = OUT / f"swarnam4u-rates-{date}.png"
-            await canvas.screenshot(path=str(target), type="png")
+            png = await canvas.evaluate("c => c.toDataURL('image/png').split(',')[1]")
+            target.write_bytes(base64.b64decode(png))
             print(f"POSTER_FILE={target}")
             print(f"POSTER_SIZE={size['w']}x{size['h']}")
             print(f"POSTER_STATUS={status}")
