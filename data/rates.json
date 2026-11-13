@@ -1,33 +1,33 @@
 {
-  "updated": "2026-11-13T13:32:09+05:30",
+  "updated": "2026-11-13T21:31:40+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
   "unit": "gram",
   "gold": {
     "22K · 916": {
-      "today": 12695,
+      "today": 12590,
       "yesterday": 12815,
       "yesterday_date": "2026-11-12",
       "date": "2026-11-13",
       "source": "AKGSMA Kerala"
     },
     "18K · 750": {
-      "today": 10390,
+      "today": 10300,
       "yesterday": 10490,
       "yesterday_date": "2026-11-12",
       "date": "2026-11-13",
       "source": "AKGSMA Kerala"
     },
     "24K · 999": {
-      "today": 13849,
+      "today": 13735,
       "yesterday": 13980,
       "yesterday_date": "2026-11-12",
       "date": "2026-11-13",
       "source": "AKGSMA Kerala (calculated from 22K)"
     },
     "14K · 585": {
-      "today": 8108,
+      "today": 8041,
       "yesterday": 8184,
       "yesterday_date": "2026-11-12",
       "date": "2026-11-13",
@@ -203,7 +203,7 @@
       },
       {
         "date": "2026-11-13",
-        "rate": 12695.0
+        "rate": 12590.0
       }
     ],
     "silver": [
@@ -536,7 +536,7 @@
         },
         {
           "date": "2026-11-13",
-          "rate": 12695.0
+          "rate": 12590.0
         }
       ]
     },
@@ -676,7 +676,7 @@
         },
         {
           "date": "2026-11-13",
-          "rate": 13849.0
+          "rate": 13735.0
         }
       ]
     },
@@ -882,9 +882,9 @@
     }
   },
   "spot": {
-    "gold_24k_per_gram": 11798.84,
-    "usd_per_oz": 3900.52002,
+    "gold_24k_per_gram": 11723.21,
+    "usd_per_oz": 3875.52002,
     "usd_inr": 94.086126,
-    "updated_at": "2026-11-13T13:32:09+05:30"
+    "updated_at": "2026-11-13T21:31:40+05:30"
   }
 }
