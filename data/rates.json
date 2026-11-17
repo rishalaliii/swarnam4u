@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-17T14:31:41+05:30",
+  "updated": "2026-11-17T23:51:13+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
@@ -994,9 +994,9 @@
     }
   },
   "spot": {
-    "gold_24k_per_gram": 11698.87,
-    "usd_per_oz": 3872.669922,
+    "gold_24k_per_gram": 11670.56,
+    "usd_per_oz": 3863.300049,
     "usd_inr": 93.959855,
-    "updated_at": "2026-11-17T14:31:41+05:30"
+    "updated_at": "2026-11-17T23:51:13+05:30"
   }
 }
