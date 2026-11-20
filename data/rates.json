@@ -1,65 +1,65 @@
 {
-  "updated": "2026-11-20T08:06:46+05:30",
+  "updated": "2026-11-20T15:55:20+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
   "unit": "gram",
   "gold": {
     "22K · 916": {
-      "today": 11980,
-      "yesterday": 12215,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 11510,
+      "yesterday": 11980,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala"
     },
     "18K · 750": {
-      "today": 9805,
-      "yesterday": 10000,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 9420,
+      "yesterday": 9805,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala"
     },
     "24K · 999": {
-      "today": 13069,
-      "yesterday": 13325,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 12556,
+      "yesterday": 13069,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala (calculated from 22K)"
     },
     "14K · 585": {
-      "today": 7651,
-      "yesterday": 7801,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 7351,
+      "yesterday": 7651,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala (calculated from 22K)"
     }
   },
   "silver": {
     "Silver · 999": {
-      "today": 180.0,
-      "yesterday": 185.0,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 175.0,
+      "yesterday": 180.0,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala"
     },
     "Silver · 925": {
-      "today": 166.5,
-      "yesterday": 171.12,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 161.88,
+      "yesterday": 166.5,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala (calculated from 999)"
     },
     "Silver · 800": {
-      "today": 144.0,
-      "yesterday": 148.0,
-      "yesterday_date": "2026-11-18",
-      "date": "2026-11-19",
+      "today": 140.0,
+      "yesterday": 144.0,
+      "yesterday_date": "2026-11-19",
+      "date": "2026-11-20",
       "source": "AKGSMA Kerala (calculated from 999)"
     }
   },
   "platinum": {
     "Platinum · 950": {
-      "today": 4106.0,
+      "today": 3911.0,
       "yesterday": 4106.0,
       "yesterday_date": "2026-11-19",
       "date": "2026-11-20",
@@ -231,7 +231,7 @@
       },
       {
         "date": "2026-11-20",
-        "rate": 11979.0
+        "rate": 11510.0
       }
     ],
     "silver": [
@@ -350,6 +350,10 @@
       {
         "date": "2026-11-19",
         "rate": 166.5
+      },
+      {
+        "date": "2026-11-20",
+        "rate": 161.88
       }
     ],
     "platinum": [
@@ -475,7 +479,7 @@
       },
       {
         "date": "2026-11-20",
-        "rate": 4106.0
+        "rate": 3911.0
       }
     ]
   },
@@ -644,7 +648,7 @@
         },
         {
           "date": "2026-11-20",
-          "rate": 11979.0
+          "rate": 11510.0
         }
       ]
     },
@@ -812,7 +816,7 @@
         },
         {
           "date": "2026-11-20",
-          "rate": 13068.0
+          "rate": 12557.0
         }
       ]
     },
@@ -937,6 +941,10 @@
         {
           "date": "2026-11-19",
           "rate": 180.0
+        },
+        {
+          "date": "2026-11-20",
+          "rate": 175.0
         }
       ]
     },
@@ -1061,14 +1069,18 @@
         {
           "date": "2026-11-19",
           "rate": 166.5
+        },
+        {
+          "date": "2026-11-20",
+          "rate": 161.88
         }
       ]
     }
   },
   "spot": {
-    "gold_24k_per_gram": 10899.13,
-    "usd_per_oz": 3625.149902,
-    "usd_inr": 93.513568,
-    "updated_at": "2026-11-20T03:13:47+05:30"
+    "gold_24k_per_gram": 10747.92,
+    "usd_per_oz": 3580.25,
+    "usd_inr": 93.372746,
+    "updated_at": "2026-11-20T15:55:20+05:30"
   }
 }
