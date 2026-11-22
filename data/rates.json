@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-22T06:13:38+05:30",
+  "updated": "2026-11-22T12:57:50+05:30",
   "source": "AKGSMA Kerala",
   "source_url": "https://akgsma.com",
   "currency": "INR",
@@ -7,54 +7,54 @@
   "gold": {
     "22K · 916": {
       "today": 11465,
-      "yesterday": 11510,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala"
+      "yesterday": 11465,
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate)"
     },
     "18K · 750": {
       "today": 9330,
-      "yesterday": 9420,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala"
+      "yesterday": 9330,
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate)"
     },
     "24K · 999": {
       "today": 12507,
-      "yesterday": 12556,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala (calculated from 22K)"
+      "yesterday": 12507,
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 22K)"
     },
     "14K · 585": {
       "today": 7322,
-      "yesterday": 7351,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala (calculated from 22K)"
+      "yesterday": 7322,
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 22K)"
     }
   },
   "silver": {
     "Silver · 999": {
-      "today": 175.0,
+      "today": 180.0,
       "yesterday": 175.0,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala"
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate)"
     },
     "Silver · 925": {
-      "today": 161.88,
+      "today": 166.5,
       "yesterday": 161.88,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala (calculated from 999)"
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 999)"
     },
     "Silver · 800": {
-      "today": 140.0,
+      "today": 144.0,
       "yesterday": 140.0,
-      "yesterday_date": "2026-11-20",
-      "date": "2026-11-21",
-      "source": "AKGSMA Kerala (calculated from 999)"
+      "yesterday_date": "2026-11-21",
+      "date": "2026-11-22",
+      "source": "LiveGold Kerala (AKGSMA board rate) (calculated from 999)"
     }
   },
   "platinum": {
@@ -366,6 +366,10 @@
       {
         "date": "2026-11-21",
         "rate": 161.88
+      },
+      {
+        "date": "2026-11-22",
+        "rate": 166.5
       }
     ],
     "platinum": [
@@ -985,6 +989,10 @@
         {
           "date": "2026-11-21",
           "rate": 175.0
+        },
+        {
+          "date": "2026-11-22",
+          "rate": 180.0
         }
       ]
     },
@@ -1117,6 +1125,10 @@
         {
           "date": "2026-11-21",
           "rate": 161.88
+        },
+        {
+          "date": "2026-11-22",
+          "rate": 166.5
         }
       ]
     }
@@ -1125,6 +1137,6 @@
     "gold_24k_per_gram": 10569.06,
     "usd_per_oz": 3539.0,
     "usd_inr": 92.889095,
-    "updated_at": "2026-11-22T06:13:38+05:30"
+    "updated_at": "2026-11-22T12:57:50+05:30"
   }
 }
